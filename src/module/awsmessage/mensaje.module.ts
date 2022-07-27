@@ -24,6 +24,6 @@ AWS.config.update({
         RasterModule,
     ],
     controllers: [],
-    providers: [MessageHandler],
+    providers: [MessageHandler]
 })
 export class MensajeModule { }

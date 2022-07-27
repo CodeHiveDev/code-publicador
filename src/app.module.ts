@@ -5,6 +5,7 @@ import { MensajeModule } from './module/awsmessage/mensaje.module';
 import { ConfigModule } from '@nestjs/config';
 //import { getEnvPath } from './common/helper/env.helper';
 import { RasterModule } from './raster/raster.module';
+import { ShapefilesService } from './shapefiles/shapefiles.service';
 
 //const envFilePath: string = getEnvPath(`${__dirname}/common/envs`);
 
@@ -14,6 +15,6 @@ import { RasterModule } from './raster/raster.module';
    // ConfigModule.forRoot({ envFilePath: `${process.env.NODE_ENV}.env`, isGlobal: true })
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, ShapefilesService],
 })
 export class AppModule {}

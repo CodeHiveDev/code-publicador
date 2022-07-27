@@ -8,18 +8,20 @@ import { RasterService } from '../../raster/raster.service';
 //console.log('config.AWS_REGION', config);
 @Injectable()
 export class MessageHandler {
+    private raster = '';
+    //private mess : Message[];
     @Inject(RasterService)
     private readonly rasterService: RasterService;
     constructor() { }
     @SqsMessageHandler("invap-ho-event-queue-test", false)
     //receiveMessage visibilitytimeoout waittime atributes all buscar sequence number deletemessage reciep handle 
-    public async MessageHandler(message: AWS.SQS.Message) {
+    public async MessageHandler(message: AWS.SQS.Message, rast: string) {
         /*const obj: any = JSON.parse(message.Body) as {
             message: string;
             date: string;
         };*/
         //const { data } = JSON.parse(obj.Message);
-        this.rasterService.rasterHandler()
+        
         console.log("data_sqs", message.Body)
         // read attributes
         
@@ -36,11 +38,17 @@ export class MessageHandler {
             Key:  message.Body //'publicador/sat.tif',
         }
         const raster : any = ""
-        s3.getObject(params, function(err, data) {
+        await s3.getObject(params, function(err, data) {
             if (err) console.log(err, err.stack); // an error occurred
-            else     console.log(data);  this.raster = data;         // successful response
+            else{
+                // successful response
+                console.log(data);  
+                this.raster = data;
+                return this.raster
+            }    
           });
-
+        (console.log(this.rasterService))
+        rast = this.rasterService.rasterHandler(this.raster)
     }
     @SqsConsumerEventHandler(config.QUEUE, /** eventName: */ 'processing_error')
     public onProcessingError(error: Error, message: AWS.SQS.Message) {
