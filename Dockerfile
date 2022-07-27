@@ -11,6 +11,8 @@ COPY . .
 RUN npm run build \
     && npm prune --production
 
+# -------
+
 FROM public.ecr.aws/bitnami/node:16-prod as final
 
 WORKDIR /usr/src/app
