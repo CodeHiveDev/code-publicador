@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ENV_FILE_NAME=".env.${ENVIRONMENT}"
+ENV_FILE_NAME="ide-publicador/.env.${ENVIRONMENT}"
 ENV_FILE_DIRNAME="envs"
 
 if [[ -z ${ENVIRONMENT} ]]; then
