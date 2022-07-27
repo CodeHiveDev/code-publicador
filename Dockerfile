@@ -5,7 +5,7 @@ ENV NODE_ENV build
 WORKDIR /usr/src/app
 
 COPY package*.json ./
-RUN npm install && pip3 install awscli
+RUN npm install
 
 COPY . .
 RUN npm run build \
@@ -21,7 +21,7 @@ COPY --from=build /usr/src/app/dist ./dist
 COPY start.sh .
 COPY package.json .
 
-EXPOSE 5000
+RUN pip3 install awscli
 
-RUN chmod +x ./start.sh
+EXPOSE 5000
 CMD ["./start.sh"]
