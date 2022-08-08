@@ -24,6 +24,8 @@ COPY start.sh .
 COPY package.json .
 
 RUN pip3 install awscli
+RUN apt-get update
+RUN apt-get install postgresql postgis -y
 
 EXPOSE 5000
 CMD ["./start.sh"]
