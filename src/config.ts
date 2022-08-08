@@ -1,5 +1,5 @@
 //require('dotenv').config({ path: `../.env.${process.env.NODE_ENV}` }); //.config({ path: `../${process.env.NODE_ENV}.env` });
-//console.log(process.env.QUEUE)
+
 export const config = { 
     QUEUE : "invap-ho-event-queue-test",
     QUEUE_URL : "https://sqs.us-east-1.amazonaws.com/180012085451/invap-ho-event-queue-test",

@@ -74,3 +74,7 @@ Nest is [MIT licensed](LICENSE).
 
 ## Requisitos
 sudo apt install postgis
+
+## script test
+sh publish.sh "nombre del archivo json"
+sh publish.sh shapefile
