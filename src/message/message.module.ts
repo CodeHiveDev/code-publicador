@@ -1,9 +1,4 @@
 import { Module } from '@nestjs/common';
-<<<<<<< HEAD:src/module/awsmessage/mensaje.module.ts
-import { SqsModule } from '@ssut/nestjs-sqs';
-import { MessageHandler } from './message.handler';
-=======
->>>>>>> develop:src/message/message.module.ts
 import * as AWS from 'aws-sdk';
 import { SqsModule } from '@ssut/nestjs-sqs';
 import { config } from '../config';
@@ -18,24 +13,6 @@ AWS.config.update({
 });
 
 @Module({
-<<<<<<< HEAD:src/module/awsmessage/mensaje.module.ts
-  imports: [
-    SqsModule.register({
-      consumers: [
-        {
-          name: config.QUEUE, // name of the queue
-          queueUrl: config.QUEUE_URL, // the url of the queue
-          region: config.AWS_REGION,
-        },
-      ],
-    }),
-    RasterModule,
-  ],
-  controllers: [],
-  providers: [MessageHandler],
-})
-export class MensajeModule {}
-=======
     imports: [
         SqsModule.register({
             consumers: [
@@ -53,4 +30,3 @@ export class MensajeModule {}
     providers: [MessageService]
 })
 export class MessageModule {}
->>>>>>> develop:src/message/message.module.ts

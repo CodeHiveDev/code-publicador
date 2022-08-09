@@ -3,10 +3,7 @@ import { Dbf } from 'dbf-reader';
 import { shp } from "shpjs";
 import { exec } from "shelljs";
 import axios from 'axios';
-//const shell = require('shelljs');
-//const axios = require('axios');
 import * as fs from "fs";
-//const path = require('path');
 //const createshapefile =fs.readFileSync(path.resolve(__dirname, '../createshapefile.sql'));
 
 @Injectable()
