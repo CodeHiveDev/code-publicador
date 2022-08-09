@@ -16,11 +16,11 @@ import { MessageModule } from './message/message.module';
 
 @Module({
   imports: [
-     ConfigModule.forRoot(),
-     RasterModule,
-     ShapefilesModule,
-     MessageModule
-   // ConfigModule.forRoot({ envFilePath: `${process.env.NODE_ENV}.env`, isGlobal: true })
+    ConfigModule.forRoot(),
+    RasterModule,
+    ShapefilesModule,
+    MessageModule,
+    // ConfigModule.forRoot({ envFilePath: `${process.env.NODE_ENV}.env`, isGlobal: true })
   ],
   controllers: [AppController],
   providers: [AppService, RasterService, ShapefilesService, MessageService],

@@ -13,20 +13,20 @@ AWS.config.update({
 });
 
 @Module({
-    imports: [
-        SqsModule.register({
-            consumers: [
-                {
-                    name: config.QUEUE, // name of the queue 
-                    queueUrl: config.QUEUE_URL, // the url of the queue
-                    region: config.AWS_REGION,
-                    messageAttributeNames: ['All'] // can read attributes
-                },
-            ],
-        }),
-        RasterModule,
-        ShapefilesModule,
-    ],
-    providers: [MessageService]
+  imports: [
+    SqsModule.register({
+      consumers: [
+        {
+          name: config.QUEUE, // name of the queue
+          queueUrl: config.QUEUE_URL, // the url of the queue
+          region: config.AWS_REGION,
+          messageAttributeNames: ['All'], // can read attributes
+        },
+      ],
+    }),
+    RasterModule,
+    ShapefilesModule,
+  ],
+  providers: [MessageService],
 })
 export class MessageModule {}

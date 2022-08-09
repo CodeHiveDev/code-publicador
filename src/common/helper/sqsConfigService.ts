@@ -1,4 +1,7 @@
-import { SqsModuleOptionsFactory, SqsOptions } from '@ssut/nestjs-sqs/dist/sqs.types';
+import {
+  SqsModuleOptionsFactory,
+  SqsOptions,
+} from '@ssut/nestjs-sqs/dist/sqs.types';
 import { ConfigService } from '@nestjs/config';
 import { Injectable } from '@nestjs/common';
 
@@ -13,10 +16,10 @@ export class SqsConfigService implements SqsModuleOptionsFactory {
     return {
       consumers: [
         {
-            queueUrl: `${endpoint}/${firstQueue}`,
-            name: firstQueue,
+          queueUrl: `${endpoint}/${firstQueue}`,
+          name: firstQueue,
         },
-    ],
+      ],
     };
   }
 }

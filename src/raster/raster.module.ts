@@ -5,6 +5,6 @@ import { RasterService } from './raster.service';
 @Module({
   controllers: [RasterController],
   providers: [RasterService],
-  exports: [RasterService]
+  exports: [RasterService],
 })
 export class RasterModule {}

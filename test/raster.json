@@ -1,12 +1,10 @@
 {
-"action":
-    {"DataType":"String","StringValue":"semaforo"},
-"folder":
-    { "DataType":"String","StringValue":"publicador/semaforo/"}, 
-"multiplesfiles":
-    { "DataType":"String","StringValue":"false"}, 
-"filename":
-    { "DataType":"String","StringValue":"semaforo_canteras_faja3"},
-"type":
-    { "DataType":"String","StringValue":"shp"}
+  "action": { "DataType": "String", "StringValue": "semaforo" },
+  "folder": { "DataType": "String", "StringValue": "publicador/semaforo/" },
+  "multiplesfiles": { "DataType": "String", "StringValue": "false" },
+  "filename": {
+    "DataType": "String",
+    "StringValue": "semaforo_canteras_faja3"
+  },
+  "type": { "DataType": "String", "StringValue": "shp" }
 }
