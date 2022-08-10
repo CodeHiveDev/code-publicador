@@ -3,7 +3,9 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 import { ConfigModule } from '@nestjs/config';
-//import { getEnvPath } from './common/helper/env.helper';
+import QueueService from './config/db.config';
+import postgisService from './config/sqs.config';
+import geoserverService from './config/geoserver.config';
 
 import { RasterModule } from './raster/raster.module';
 import { RasterService } from './raster/raster.service';
@@ -12,15 +14,16 @@ import { ShapefilesModule } from './shapefiles/shapefiles.module';
 import { MessageService } from './message/message.service';
 import { MessageModule } from './message/message.module';
 
-//const envFilePath: string = getEnvPath(`${__dirname}/common/envs`);
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [QueueService, postgisService, geoserverService]
+    }),
     RasterModule,
     ShapefilesModule,
-    MessageModule,
-    // ConfigModule.forRoot({ envFilePath: `${process.env.NODE_ENV}.env`, isGlobal: true })
+    MessageModule
   ],
   controllers: [AppController],
   providers: [AppService, RasterService, ShapefilesService, MessageService],

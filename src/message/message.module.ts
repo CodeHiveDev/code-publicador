@@ -1,19 +1,26 @@
 import { Module } from '@nestjs/common';
 import * as AWS from 'aws-sdk';
 import { SqsModule } from '@ssut/nestjs-sqs';
-import { config } from '../config';
+
 import { RasterModule } from '../raster/raster.module';
 import { ShapefilesModule } from '../shapefiles/shapefiles.module';
 import { MessageService } from './message.service';
+import { SqsConfigService } from '../common/helper/sqsConfig.service';
 
+/*
 AWS.config.update({
-  region: config.AWS_REGION,
-  accessKeyId: config.ACCESS_KEY_ID,
-  secretAccessKey: config.SECRET_ACCESS_KEY,
+  accessKeyId: this.configService.get<string>('AWS_REGION'), //process.env.ACCESS_KEY_ID, //config.ACCESS_KEY_ID,
+  secretAccessKey: //process.env.SECRET_ACCESS_KEY, //config.SECRET_ACCESS_KEY,
+  region: //process.env.AWS_REGION, //config.AWS_REGION,
 });
+*/
 
 @Module({
   imports: [
+    SqsModule.registerAsync({
+        useClass: SqsConfigService,
+      }),
+    /*
     SqsModule.register({
       consumers: [
         {
@@ -23,7 +30,7 @@ AWS.config.update({
           messageAttributeNames: ['All'], // can read attributes
         },
       ],
-    }),
+    }),*/
     RasterModule,
     ShapefilesModule,
   ],
