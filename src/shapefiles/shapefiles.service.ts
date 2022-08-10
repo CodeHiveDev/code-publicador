@@ -1,6 +1,4 @@
 import { Injectable, forwardRef, Inject } from '@nestjs/common';
-import { Dbf } from 'dbf-reader';
-import { shp } from 'shpjs';
 import { exec } from 'shelljs';
 import axios from 'axios';
 import * as fs from 'fs';
@@ -106,10 +104,6 @@ export class ShapefilesService {
           nameshapefile +
           ' " ',
       );
-      // Shp Parser
-      // this.ShpParser('/mnt/d/tmp/'+folders3+nameshapefile+'.shp')
-      // Dbf Parser
-      // this.DbfParser('/mnt/d/tmp/'+folders3+nameshapefile+'.dbf')
 
       // Check if exist the layer and then...
       this.getLayerName(nameshapefile)
@@ -174,26 +168,6 @@ export class ShapefilesService {
     // Delete layer if need
     // DELETE http://<url>/geoserver/rest/workspaces/<workspaceName>/coveragestores/<storeName>/coverages/<layerName>?recurse=true
     return 'done';
-  }
-  private DbfParser(dbffile: any) {
-    // Parse Dbf
-    console.log('here', dbffile);
-    let buffer: Buffer = fs.readFileSync(dbffile);
-    let datatable = Dbf.read(buffer);
-    console.log(datatable.columns);
-    //setColumns(datatable.columns)
-  }
-
-  private ShpParser(shpfile: any) {
-    console.log(shpfile);
-    shp(shpfile)
-      .then((geo) => {
-        let geom = geo.features[0].geometry.type;
-        console.log('shape', geo);
-      })
-      .catch((err) => {
-        console.debug('rejected  (' + err + ')');
-      });
   }
 
   private async getLayerName(layername) {
