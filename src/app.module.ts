@@ -14,16 +14,15 @@ import { ShapefilesModule } from './shapefiles/shapefiles.module';
 import { MessageService } from './message/message.service';
 import { MessageModule } from './message/message.module';
 
-
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [QueueService, postgisService, geoserverService]
+      load: [QueueService, postgisService, geoserverService],
     }),
     RasterModule,
     ShapefilesModule,
-    MessageModule
+    MessageModule,
   ],
   controllers: [AppController],
   providers: [AppService, RasterService, ShapefilesService, MessageService],

@@ -1,60 +1,78 @@
-import { Injectable, forwardRef, Inject } from '@nestjs/common';
+import { Injectable, forwardRef, Inject, ConsoleLogger } from '@nestjs/common';
 import { exec } from 'shelljs';
 import axios from 'axios';
 import * as fs from 'fs';
+import { readFileSync } from 'fs';
 import { ConfigService } from '@nestjs/config';
+import path = require('path');
 
 @Injectable()
 export class ShapefilesService {
-    private P_PORT: number;
-    private P_HOST: string;
-    private P_USER: string;
-    private P_DB: string;
-    private P_PASS: string;
-    private G_HOST: string;
-    private G_AUTH: string;
-    private G_USER: string;
-    private G_PASS: string;
+  private P_PORT: number;
+  private P_HOST: string;
+  private P_USER: string;
+  private P_DB: string;
+  private P_PASS: string;
+  private G_HOST: string;
+  private G_AUTH: string;
+  private G_USER: string;
+  private G_PASS: string;
 
-    constructor(
-        @Inject(forwardRef(() => ConfigService))
-        private configService: ConfigService,
-      ) {
-        const GEOSERVER_HOST = this.configService.get<string>('geoserverService.SERVER_HOST');
-        this.G_HOST = GEOSERVER_HOST;
-        if (!GEOSERVER_HOST) {
-            throw new Error(`GEOSERVER variables are missing`);
-          }
+  constructor(
+    @Inject(forwardRef(() => ConfigService))
+    private configService: ConfigService,
+  ) {
+    const GEOSERVER_HOST = this.configService.get<string>(
+      'geoserverService.SERVER_HOST',
+    );
+    this.G_HOST = GEOSERVER_HOST;
+    if (!GEOSERVER_HOST) {
+      throw new Error(`GEOSERVER variables are missing`);
+    }
 
-        const GEOSERVER_AUTH = this.configService.get<string>('geoserverService.SERVER_AUTH');
-        this.G_AUTH = GEOSERVER_AUTH;
+    const GEOSERVER_AUTH = this.configService.get<string>(
+      'geoserverService.SERVER_AUTH',
+    );
+    this.G_AUTH = GEOSERVER_AUTH;
 
-        const GEOSERVER_USER = this.configService.get<string>('geoserverService.SERVER_USER');
-        this.G_USER = GEOSERVER_USER;
+    const GEOSERVER_USER = this.configService.get<string>(
+      'geoserverService.SERVER_USER',
+    );
+    this.G_USER = GEOSERVER_USER;
 
-        const GEOSERVER_PASS = this.configService.get<string>('geoserverService.SERVER_PASSWORD');
-        this.G_PASS = GEOSERVER_PASS;
+    const GEOSERVER_PASS = this.configService.get<string>(
+      'geoserverService.SERVER_PASSWORD',
+    );
+    this.G_PASS = GEOSERVER_PASS;
 
+    const POSTGRES_HOST = this.configService.get<string>(
+      'postgisService.POSTGRES_HOST',
+    );
+    this.P_HOST = POSTGRES_HOST;
+    if (!POSTGRES_HOST) {
+      throw new Error(`POSTGIS variables are missing`);
+    }
 
-        const POSTGRES_HOST = this.configService.get<string>('postgisService.POSTGRES_HOST');
-        this.P_HOST = POSTGRES_HOST;
-        if (!POSTGRES_HOST) {
-            throw new Error(`POSTGIS variables are missing`);
-        }
+    const POSTGRES_PORT = this.configService.get<number>(
+      'postgisService.POSTGRES_PORT',
+    );
+    this.P_PORT = POSTGRES_PORT;
 
-        const POSTGRES_PORT = this.configService.get<number>('postgisService.POSTGRES_PORT');
-        this.P_PORT = POSTGRES_PORT;
+    const POSTGRES_USER = this.configService.get<string>(
+      'postgisService.POSTGRES_USER',
+    );
+    this.P_USER = POSTGRES_USER;
 
-        const POSTGRES_USER = this.configService.get<string>('postgisService.POSTGRES_USER');
-        this.P_USER = POSTGRES_USER;
+    const POSTGRES_DB = this.configService.get<string>(
+      'postgisService.POSTGRES_DB',
+    );
+    this.P_DB = POSTGRES_DB;
 
-        const POSTGRES_DB = this.configService.get<string>('postgisService.POSTGRES_DB');
-        this.P_DB = POSTGRES_DB;
-
-        const PGPASSWORD = this.configService.get<string>('postgisService.PGPASSWORD');
-        this.P_PASS = PGPASSWORD;
-
-      }
+    const PGPASSWORD = this.configService.get<string>(
+      'postgisService.PGPASSWORD',
+    );
+    this.P_PASS = PGPASSWORD;
+  }
   public shapeHandler(
     fileshape: any,
     pathandfile,
@@ -87,7 +105,7 @@ export class ShapefilesService {
           ' -U ' +
           this.P_USER +
           ' -c "CREATE TABLE IF NOT EXISTS public.shapefiles ( idshapefile serial NOT NULL, id_0 integer NOT NULL, layername varchar(100), expediente text, categoria text, fecha date, geom geometry, PRIMARY KEY (idshapefile))" ',
-      ); // -f "createshapefile"
+      ); // -f "createshapefile" sql query
       // Altern Table add column
       exec(
         'PGPASSWORD=' +
@@ -129,7 +147,7 @@ export class ShapefilesService {
           // Insert field layername if is null
           exec(
             'PGPASSWORD=' +
-            this.P_PASS +
+              this.P_PASS +
               ' psql -h ' +
               this.P_HOST +
               ' -d ' +
@@ -147,15 +165,32 @@ export class ShapefilesService {
 
           // Geoserver Rest Publish
           await this.publishLayer(nameshapefile, type);
-          // Create Style
-          await this.createStyle(nameshapefile).then((res) => {
-            // Load Style
-            let sldfile = `/tmp/${folders3}${nameshapefile}.sld`;
-            if (sldfile) this.uploadStyle(sldfile, nameshapefile);
-          });
+          // Get Style If exist
+          this.getStyle('semaforo_style')
+            .then(async (res) => {
+              // Create Style
+              await this.createStyle('semaforo_style')
+                .then(async (res) => {
+                  // UpLoad Style
+                  // let sldfile = `/tmp/${folders3}${nameshapefile}.sld`;
+                  let sldfile = path.join(
+                    __dirname,
+                    '..',
+                    '/common/files/semaforo_style.sld',
+                  );
+                  this.uploadStyle(sldfile, 'semaforo_style');
+                })
+                .catch((error) => {
+                  console.log(error);
+                });
+              // Apply Style
+              await this.setLayerStyle(nameshapefile, 'semaforo_style');
+            })
+            .catch((error) => {
+              // Apply Style
+              this.setLayerStyle(nameshapefile, 'semaforo_style');
+            });
 
-          // Apply Style
-          await this.setLayerStyle(nameshapefile);
           // Delete File s3 if ok
         })
         .catch((error) => {
@@ -170,8 +205,34 @@ export class ShapefilesService {
     return 'done';
   }
 
-  private async getLayerName(layername) {
+  private async getStyle(layername) {
     return new Promise((resolve, reject) => {
+      let config = {
+        method: 'get',
+        url: `http://${this.G_HOST}/geoserver/rest/styles/${layername}.sld`,
+        headers: {
+          Authorization: `Basic ${this.G_AUTH}`,
+          'Content-Type': 'application/xml',
+        },
+      };
+      axios(config)
+        .then((res) => {
+          if (res.status == 200) {
+            reject('err');
+            console.warn('style exists');
+          } else {
+            resolve('no style');
+          }
+        })
+        .catch((error) => {
+          resolve('no style');
+          console.log('error en el get style geoserver');
+        });
+    });
+  }
+
+  private async getLayerName(layername) {
+    return new Promise(async (resolve, reject) => {
       let config = {
         method: 'get',
         url: `http://${this.G_HOST}/geoserver/rest/workspaces/Mineria/datastores/postgis/featuretypes/${layername}.xml`,
@@ -180,19 +241,19 @@ export class ShapefilesService {
           'Content-Type': 'application/xml',
         },
       };
-      axios(config)
-        .then((response) => {
-          if (response.status == 200) {
-            reject();
-            console.warn('layer exists');
-          } else {
-            resolve('no_layer');
-          }
+      const conn = await axios(config)
+        .then((res) => {
+          return res.status;
         })
         .catch((error) => {
-          resolve('no_layer');
           console.log('error en el get layer geoserver');
         });
+      if (conn == 200 || conn == 201) {
+        console.warn('layer exists');
+        reject('layer exist');
+      } else {
+        resolve('no layer');
+      }
     });
   }
 
@@ -254,12 +315,37 @@ export class ShapefilesService {
     this.connection(data, 'post', url, auth, 'xml', func);
   }
 
-  private createStyle(layername) {
+  private async createStyle(layername) {
     return new Promise(async (resolve, reject) => {
       let func = 'createStyle';
       let dataStyle = `<style><name>${layername}</name><filename>${layername}.sld</filename></style>`;
       let url = `http://${this.G_HOST}/geoserver/rest/styles`;
-      let auth = `${this.G_AUTH}`;
+
+      let config = {
+        method: 'post',
+        url: url,
+        data: dataStyle,
+        headers: {
+          Authorization: `Basic ${this.G_AUTH}`,
+          'Content-Type': 'application/xml',
+        },
+      };
+      const conn = await axios(config)
+        .then((res) => {
+          return res.status;
+        })
+        .catch((error) => {
+          console.log('error en el create style geoserver');
+        });
+      if (conn == 200 || conn == 201) {
+        console.warn('style created');
+        resolve('style created');
+        return resolve;
+      } else {
+        reject('no connexion');
+      }
+      /*
+        
       const conn = await this.connection(
         dataStyle,
         'post',
@@ -267,10 +353,10 @@ export class ShapefilesService {
         auth,
         'xml',
         func,
-      );
-      if (conn !== null) {
-        resolve('res');
-      }
+      )
+        if (conn == 200 || conn == 201 ) { resolve(conn);
+        } else { reject("no connexion")}
+        */
     });
   }
 
@@ -285,13 +371,9 @@ export class ShapefilesService {
     );
   }
 
-  private setLayerStyle(layername) {
+  private setLayerStyle(layername, stylename) {
     let func = 'setLayerStyle';
-    let dataStyle = `<layer>
-                                <defaultStyle>
-                                    <name>${layername}</name>
-                                </defaultStyle>
-                        </layer>`;
+    let dataStyle = `<layer><defaultStyle><name>${stylename}</name></defaultStyle></layer>`;
     let url = `http://${this.G_HOST}/geoserver/rest/layers/Mineria:${layername}`;
     let auth = `${this.G_AUTH}`;
     this.connection(dataStyle, 'put', url, auth, 'xml', func);
@@ -308,12 +390,14 @@ export class ShapefilesService {
       data: dataIn,
     };
 
-    await axios(configConn)
-      .then((response) => {
+    const conn = await axios(configConn)
+      .then((res) => {
         console.log('loaded', func);
+        return res.status;
       })
       .catch((error) => {
         console.debug(func, 'error', error);
       });
+    return conn;
   }
 }

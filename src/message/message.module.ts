@@ -18,8 +18,8 @@ AWS.config.update({
 @Module({
   imports: [
     SqsModule.registerAsync({
-        useClass: SqsConfigService,
-      }),
+      useClass: SqsConfigService,
+    }),
     /*
     SqsModule.register({
       consumers: [
