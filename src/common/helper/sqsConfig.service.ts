@@ -10,17 +10,11 @@ export class SqsConfigService implements SqsModuleOptionsFactory {
   constructor(private configService: ConfigService) {}
 
   public createOptions(): SqsOptions {
-    const endpoint = this.configService.get<string>('QueueService.QUEUE_URL');
-    const firstQueue = this.configService.get<string>('QueueService.QUEUE');
-    const regionQueue = this.configService.get<string>(
-      'QueueService.AWS_REGION',
-    );
-    const accesKey = this.configService.get<string>(
-      'QueueService.ACCESS_KEY_ID',
-    );
-    const secretKey = this.configService.get<string>(
-      'QueueService.SECRET_ACCESS_KEY',
-    );
+    const endpoint = this.configService.get<string>('QUEUE_URL');
+    const firstQueue = this.configService.get<string>('QUEUE');
+    const regionQueue = this.configService.get<string>('AWS_REGION');
+    const accesKey = this.configService.get<string>('ACCESS_KEY_ID');
+    const secretKey = this.configService.get<string>('SECRET_ACCESS_KEY');
 
     return {
       consumers: [

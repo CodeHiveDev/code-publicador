@@ -11,20 +11,31 @@ import { RasterModule } from './raster/raster.module';
 import { RasterService } from './raster/raster.service';
 import { ShapefilesService } from './shapefiles/shapefiles.service';
 import { ShapefilesModule } from './shapefiles/shapefiles.module';
+import { dbHelperModule } from './helper/dbHelper.module';
+import { dbHelper } from './helper/dbHelper';
 import { MessageService } from './message/message.service';
 import { MessageModule } from './message/message.module';
+import { getEnvPath } from './common/helper/env.helper';
+import { TypeOrmConfigService } from './shared/typeorm/typeorm.service';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
+const envFilePath: string = getEnvPath(`${__dirname}/common/envs`);
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [QueueService, postgisService, geoserverService],
-    }),
+    ConfigModule.forRoot({ envFilePath, isGlobal: true }),
     RasterModule,
+    dbHelperModule,
     ShapefilesModule,
     MessageModule,
+    TypeOrmModule.forRootAsync({ useClass: TypeOrmConfigService }),
   ],
   controllers: [AppController],
-  providers: [AppService, RasterService, ShapefilesService, MessageService],
+  providers: [
+    AppService,
+    dbHelper,
+    RasterService,
+    ShapefilesService,
+    MessageService,
+  ],
 })
 export class AppModule {}

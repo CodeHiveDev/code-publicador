@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import { readFileSync } from 'fs';
 import { ConfigService } from '@nestjs/config';
 import path = require('path');
-
+import { dbHelper } from '../helper/dbHelper';
 @Injectable()
 export class ShapefilesService {
   private P_PORT: number;
@@ -17,18 +17,20 @@ export class ShapefilesService {
   private G_AUTH: string;
   private G_USER: string;
   private G_PASS: string;
-
+  private PBUCKETNAME: string;
   constructor(
     @Inject(forwardRef(() => ConfigService))
     private configService: ConfigService,
+    private dbHelperQ: dbHelper,
   ) {
-    const GEOSERVER_HOST = this.configService.get<string>(
-      'geoserverService.SERVER_HOST',
-    );
-    this.G_HOST = GEOSERVER_HOST;
-    if (!GEOSERVER_HOST) {
+    this.G_HOST = this.configService.get<string>('SERVER_HOST');
+
+    if (!this.G_HOST) {
       throw new Error(`GEOSERVER variables are missing`);
     }
+
+    const BUCKETNAME = this.configService.get<string>('BUCKETNAME');
+    this.PBUCKETNAME = BUCKETNAME;
 
     const GEOSERVER_AUTH = this.configService.get<string>(
       'geoserverService.SERVER_AUTH',
@@ -45,32 +47,20 @@ export class ShapefilesService {
     );
     this.G_PASS = GEOSERVER_PASS;
 
-    const POSTGRES_HOST = this.configService.get<string>(
-      'postgisService.POSTGRES_HOST',
-    );
-    this.P_HOST = POSTGRES_HOST;
-    if (!POSTGRES_HOST) {
-      throw new Error(`POSTGIS variables are missing`);
-    }
+    const POSTGRES_HOST = this.configService.get<string>('DATABASE_HOST');
 
-    const POSTGRES_PORT = this.configService.get<number>(
-      'postgisService.POSTGRES_PORT',
-    );
+    this.P_HOST = POSTGRES_HOST;
+
+    const POSTGRES_PORT = this.configService.get<number>('DATABASE_PORT');
     this.P_PORT = POSTGRES_PORT;
 
-    const POSTGRES_USER = this.configService.get<string>(
-      'postgisService.POSTGRES_USER',
-    );
+    const POSTGRES_USER = this.configService.get<string>('DATABASE_USER');
     this.P_USER = POSTGRES_USER;
 
-    const POSTGRES_DB = this.configService.get<string>(
-      'postgisService.POSTGRES_DB',
-    );
+    const POSTGRES_DB = this.configService.get<string>('DATABASE_NAME');
     this.P_DB = POSTGRES_DB;
 
-    const PGPASSWORD = this.configService.get<string>(
-      'postgisService.PGPASSWORD',
-    );
+    const PGPASSWORD = this.configService.get<string>('DATABASE_PASSWORD');
     this.P_PASS = PGPASSWORD;
   }
   public shapeHandler(
@@ -82,86 +72,24 @@ export class ShapefilesService {
   ) {
     // Copy S3 file to a temp storage
     exec(
-      'aws s3 cp s3://ho-backend-content-dev/' +
-        folders3 +
-        ' /tmp/' +
-        folders3 +
-        ' --recursive --exclude "*" --include "' +
-        nameshapefile +
-        '*"',
+      `aws s3 cp s3://${this.PBUCKETNAME}/${folders3} /tmp/${folders3} --recursive --exclude "*" --include ${nameshapefile}*`,
     );
+
     // Convert shp to postgis
     try {
       // Create table
-      exec(
-        'PGPASSWORD=' +
-          this.P_PASS +
-          ' psql -h ' +
-          this.P_HOST +
-          ' -d ' +
-          this.P_DB +
-          ' -p ' +
-          this.P_PORT +
-          ' -U ' +
-          this.P_USER +
-          ' -c "CREATE TABLE IF NOT EXISTS public.shapefiles ( idshapefile serial NOT NULL, id_0 integer NOT NULL, layername varchar(100), expediente text, categoria text, fecha date, geom geometry, PRIMARY KEY (idshapefile))" ',
-      ); // -f "createshapefile" sql query
-      // Altern Table add column
-      exec(
-        'PGPASSWORD=' +
-          this.P_PASS +
-          ' psql -h ' +
-          this.P_HOST +
-          ' -d ' +
-          this.P_DB +
-          ' -p ' +
-          this.P_PORT +
-          ' -U ' +
-          this.P_USER +
-          ' -c "ALTER TABLE public.shapefiles ADD COLUMN IF NOT EXISTS layername varchar(100) DEFAULT ' +
-          nameshapefile +
-          ' " ',
-      );
+      this.dbHelperQ.createTable(nameshapefile);
 
       // Check if exist the layer and then...
       this.getLayerName(nameshapefile)
         .then(async (res) => {
           // Shapefile to Postgis
           exec(
-            'shp2pgsql -a -s 4326 -I -W "latin1" /tmp/' +
-              pathandfile +
-              ' public.shapefiles | PGAPPNAME="' +
-              nameshapefile +
-              '" PGPASSWORD=' +
-              this.P_PASS +
-              ' psql -h ' +
-              this.P_HOST +
-              ' -d ' +
-              this.P_DB +
-              ' -p ' +
-              this.P_PORT +
-              ' -U ' +
-              this.P_USER +
-              ' ',
+            `shp2pgsql -a -s 4326 -I -W "latin1" /tmp/${pathandfile} public.shapefiles | PGAPPNAME=${nameshapefile} PGPASSWORD=${this.P_PASS} psql -h ${this.P_HOST} -d ${this.P_DB} -p ${this.P_PORT} -U ${this.P_USER} `,
           );
+
           // Insert field layername if is null
-          exec(
-            'PGPASSWORD=' +
-              this.P_PASS +
-              ' psql -h ' +
-              this.P_HOST +
-              ' -d ' +
-              this.P_DB +
-              ' -p ' +
-              this.P_PORT +
-              ' -U ' +
-              this.P_USER +
-              ' -c "UPDATE public.shapefiles SET layername = ' +
-              "'" +
-              nameshapefile +
-              "'" +
-              ' WHERE layername IS NULL" ',
-          ); //AND fecha = atributo fecha
+          this.dbHelperQ.shapefilesUpdate(nameshapefile);
 
           // Geoserver Rest Publish
           await this.publishLayer(nameshapefile, type);
@@ -344,19 +272,6 @@ export class ShapefilesService {
       } else {
         reject('no connexion');
       }
-      /*
-        
-      const conn = await this.connection(
-        dataStyle,
-        'post',
-        url,
-        auth,
-        'xml',
-        func,
-      )
-        if (conn == 200 || conn == 201 ) { resolve(conn);
-        } else { reject("no connexion")}
-        */
     });
   }
 
