@@ -1,14 +1,14 @@
 <featureType>
-    <name>${nameshapefile}</name>
-    <nativeName>${nameshapefile}</nativeName>
+    <name>{{ nameshapefile }}</name>
+    <nativeName>{{nameshapefile}}</nativeName>
     <namespace>
         <name>Mineria</name>
         <atom:link xmlns:atom="http://www.w3.org/2005/Atom" rel="alternate" href="http://${this.G_HOST}/geoserver/rest/namespaces/Mineria.xml" type="application/xml"/>
     </namespace>
-    <title>${nameshapefile}</title>
+    <title>{{nameshapefile}}</title>
     <keywords>
         <string>features</string>
-        <string>${nameshapefile}</string>
+        <string>{{nameshapefile}}</string>
     </keywords>
     <srs>EPSG:4326</srs>
     <projectionPolicy>FORCE_DECLARED</projectionPolicy>
@@ -17,13 +17,13 @@
         <entry key="cachingEnabled">false</entry>
         <entry key="JDBC_VIRTUAL_TABLE">
         <virtualTable>
-            <name>${nameshapefile}</name>
-            <sql>select idshapefile, id_0, layername, expediente, categoria, fecha, geom  from shapefiles where layername = '${nameshapefile}' order by idshapefile asc</sql>
+            <name>{{nameshapefile}}</name>
+            <sql>select idshapefile, id_0, layername, expediente, categoria, fecha, geom  from shapefiles where layername = '{{nameshapefile}}' order by idshapefile asc</sql>
             <escapeSql>false</escapeSql>
             <keyColumn>idshapefile</keyColumn>
             <geometry>
                 <name>geom</name>
-                <type>${type}</type>
+                <type>{{type}}</type>
                 <srid>4326</srid>
             </geometry>
         </virtualTable>

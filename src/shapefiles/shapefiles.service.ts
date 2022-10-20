@@ -6,6 +6,7 @@ import { readFileSync } from 'fs';
 import { ConfigService } from '@nestjs/config';
 import path = require('path');
 import { dbHelper } from '../helper/dbHelper';
+import { render, renderFile } from 'template-file';
 @Injectable()
 export class ShapefilesService {
   private P_PORT: number;
@@ -57,7 +58,7 @@ export class ShapefilesService {
     const PGPASSWORD = this.configService.get<string>('DATABASE_PASSWORD');
     this.P_PASS = PGPASSWORD;
   }
-  public shapeHandler(
+  public async shapeHandler(
     fileshape: any,
     pathandfile,
     folders3,
@@ -178,55 +179,20 @@ export class ShapefilesService {
   private async publishLayer(nameshapefile, type) {
     const func = 'publishLayer';
 
-    let data = `<featureType>
-                <name>${nameshapefile}</name>
-                <nativeName>${nameshapefile}</nativeName>
-                <namespace>
-                    <name>Mineria</name>
-                    <atom:link xmlns:atom="http://www.w3.org/2005/Atom" rel="alternate" href="http://${this.G_HOST}/geoserver/rest/namespaces/Mineria.xml" type="application/xml"/>
-                </namespace>
-                <title>${nameshapefile}</title>
-                <keywords>
-                    <string>features</string>
-                    <string>${nameshapefile}</string>
-                </keywords>
-                <srs>EPSG:4326</srs>
-                <projectionPolicy>FORCE_DECLARED</projectionPolicy>
-                <enabled>true</enabled>
-                <metadata>
-                    <entry key="cachingEnabled">false</entry>
-                    <entry key="JDBC_VIRTUAL_TABLE">
-                    <virtualTable>
-                        <name>${nameshapefile}</name>
-                        <sql>select idshapefile, id_0, layername, expediente, categoria, fecha, geom  from shapefiles where layername = '${nameshapefile}' order by idshapefile asc</sql>
-                        <escapeSql>false</escapeSql>
-                        <keyColumn>idshapefile</keyColumn>
-                        <geometry>
-                            <name>geom</name>
-                            <type>${type}</type>
-                            <srid>4326</srid>
-                        </geometry>
-                    </virtualTable>
-                    </entry>
-                    <entry key="time">
-                        <dimensionInfo>
-                            <enabled>true</enabled>
-                            <attribute>fecha</attribute>
-                            <presentation>CONTINUOUS_INTERVAL</presentation>
-                            <units>ISO8601</units>
-                            <defaultValue>
-                                <strategy>MAXIMUM</strategy>
-                            </defaultValue>
-                        </dimensionInfo>
-                    </entry>
-                </metadata>
-                <store class="dataStore">
-                    <name>postgis</name>
-                    <atom:link xmlns:atom="http://www.w3.org/2005/Atom" rel="alternate" href="http://${this.G_HOST}/geoserver/rest/workspaces/Mineria/datastores/postgis.xml" type="application/xml"/>
-                </store>
-                <maxFeatures>0</maxFeatures>
-                <numDecimals>0</numDecimals>
-            </featureType>`;
+    const appRoot = path.resolve(__dirname);
+    const dataType = {
+      nameshapefile: nameshapefile,
+      G_HOST: this.G_HOST,
+      type: type,
+    };
+
+    // Replace variables in a file (same as above, but from a file)
+    const data = await renderFile(
+      `${appRoot}/assest/featureType.tpl`,
+      dataType,
+    );
+    console.log(data);
+
     // Style layer
     // Post Config
     const url = `http://${this.G_HOST}/geoserver/rest/workspaces/Mineria/datastores/postgis/featuretypes`;
