@@ -91,12 +91,12 @@ export class ShapefilesService {
               await this.createStyle('semaforo_style')
                 .then(async (res) => {
                   // UpLoad Style
-                  // let sldfile = `/tmp/${folders3}${nameshapefile}.sld`;
-                  const sldfile = path.join(
-                    __dirname,
-                    '..',
-                    '/common/files/semaforo_style.sld',
-                  );
+                  const sldfile = `/tmp/${folders3}${nameshapefile}.sld`;
+                  // const sldfile = path.join(
+                  //   __dirname,
+                  //   '..',
+                  //   '/common/files/semaforo_style.sld',
+                  // );
                   this.uploadStyle(sldfile, 'semaforo_style');
                 })
                 .catch((error) => {
