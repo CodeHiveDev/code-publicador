@@ -2,6 +2,7 @@ import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
+import { exec } from 'shelljs';
 import * as AWS from 'aws-sdk';
 import * as path from 'path';
 
@@ -40,17 +41,20 @@ export class dbHelper {
 
   //Shapefile to Postgis
   public async shapefilesToPosg(pathandfile: string, nameshapefile: string) {
-    this.dataSource.query(
-      `shp2pgsql -a -s 4326 -I -W "latin1" /tmp/${pathandfile} public.shapefiles | PGAPPNAME=${nameshapefile} PGPASSWORD=${this.configService.get<string>(
-        'DATABASE_PASSWORD',
-      )} psql -h ${this.configService.get<string>(
-        'DATABASE_HOST',
-      )} -d ${this.configService.get<string>(
-        'DATABASE_NAME',
-      )} -p ${this.configService.get<string>(
-        'DATABASE_PORT',
-      )} -U ${this.configService.get<string>('DATABASE_USER')} `,
-    ); //AND fecha = atributo fecha
+    // this.dataSource.query(
+    //   `shp2pgsql -a -s 4326 -I -W "latin1" /tmp/${pathandfile} public.shapefiles | PGAPPNAME=${nameshapefile} PGPASSWORD=${this.configService.get<string>(
+    //     'DATABASE_PASSWORD',
+    //   )} psql -h ${this.configService.get<string>(
+    //     'DATABASE_HOST',
+    //   )} -d ${this.configService.get<string>(
+    //     'DATABASE_NAME',
+    //   )} -p ${this.configService.get<string>(
+    //     'DATABASE_PORT',
+    //   )} -U ${this.configService.get<string>('DATABASE_USER')} `,
+    // ); 
+
+    exec('shp2pgsql -a -s 4326 -I -W "latin1" /tmp/' + pathandfile + ' public.shapefiles | PGAPPNAME="'+nameshapefile+'" PGPASSWORD='+process.env.PGPASSWORD+' psql -h '+process.env.DATABASE_HOST+' -d '+process.env.POSTGRES_DB+' -p '+process.env.POSTGRES_PORT+' -U '+process.env.POSTGRES_USER+' ');
+
   }
   public async copyS3Tmp(nameshapefile: string, folders: string) {
     const BUCKETNAME = this.configService.get<string>('BUCKETNAME');

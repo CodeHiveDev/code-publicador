@@ -71,7 +71,7 @@ export class ShapefilesService {
     // Convert shp to postgis
     try {
       // Create table
-      this.dbHelperQ.createTable(nameshapefile);
+      //this.dbHelperQ.createTable(nameshapefile);
 
       // Check if exist the layer and then...
       this.getLayerName(nameshapefile)
@@ -80,7 +80,7 @@ export class ShapefilesService {
           this.dbHelperQ.shapefilesToPosg(pathandfile, nameshapefile);
 
           // Insert field layername if is null
-          this.dbHelperQ.shapefilesUpdate(nameshapefile);
+          //this.dbHelperQ.shapefilesUpdate(nameshapefile);
 
           // Geoserver Rest Publish
           await this.publishLayer(nameshapefile, type);
@@ -191,7 +191,7 @@ export class ShapefilesService {
       `${appRoot}/assest/featureType.tpl`,
       dataType,
     );
-    console.log(data);
+    //console.log(data);
 
     // Style layer
     // Post Config
@@ -236,11 +236,8 @@ export class ShapefilesService {
     const func = 'uploadStyle';
     const url = `http://${this.G_HOST}/geoserver/rest/styles/${layername}`; //?name=${layername}` ?raw=true
     const auth = `${this.G_AUTH}`;
-    // this.connection(sldfile, 'put', url, auth, 'vnd.ogc.sld+xml', func)
-    // alternative with curl
-    exec(
-      `curl -v -u ${this.G_USER}:${this.G_PASS} -XPUT -H "Content-type: application/vnd.ogc.sld+xml" -d @${sldfile} ${url}`,
-    );
+    const style = fs.readFileSync(sldfile, { encoding: 'utf8' });
+    this.connection(style, 'put', url, auth, 'vnd.ogc.sld+xml', func);
   }
 
   private setLayerStyle(layername, stylename) {
