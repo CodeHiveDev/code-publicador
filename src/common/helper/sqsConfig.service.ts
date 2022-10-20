@@ -4,6 +4,7 @@ import {
 } from '@ssut/nestjs-sqs/dist/sqs.types';
 import { ConfigService } from '@nestjs/config';
 import { Injectable } from '@nestjs/common';
+import * as AWS from 'aws-sdk';
 
 @Injectable()
 export class SqsConfigService implements SqsModuleOptionsFactory {
@@ -15,6 +16,12 @@ export class SqsConfigService implements SqsModuleOptionsFactory {
     const regionQueue = this.configService.get<string>('AWS_REGION');
     const accesKey = this.configService.get<string>('ACCESS_KEY_ID');
     const secretKey = this.configService.get<string>('SECRET_ACCESS_KEY');
+
+    AWS.config.update({
+      accessKeyId: this.configService.get<string>('ACCESS_KEY_ID'), //config.ACCESS_KEY_ID,
+      secretAccessKey: this.configService.get<string>('SECRET_ACCESS_KEY'), //config.SECRET_ACCESS_KEY,
+      region: this.configService.get<string>('AWS_REGION'), //config.AWS_REGION,
+    });
 
     return {
       consumers: [

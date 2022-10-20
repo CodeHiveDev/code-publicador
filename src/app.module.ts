@@ -18,11 +18,15 @@ import { MessageModule } from './message/message.module';
 import { getEnvPath } from './common/helper/env.helper';
 import { TypeOrmConfigService } from './shared/typeorm/typeorm.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-
+import configuration from './config/configuration';
 const envFilePath: string = getEnvPath(`${__dirname}/common/envs`);
 @Module({
   imports: [
-    ConfigModule.forRoot({ envFilePath, isGlobal: true }),
+    ConfigModule.forRoot({
+      envFilePath,
+      isGlobal: true,
+      load: [configuration],
+    }),
     RasterModule,
     dbHelperModule,
     ShapefilesModule,

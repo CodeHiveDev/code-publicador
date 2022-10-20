@@ -71,9 +71,7 @@ export class ShapefilesService {
     type,
   ) {
     // Copy S3 file to a temp storage
-    exec(
-      `aws s3 cp s3://${this.PBUCKETNAME}/${folders3} /tmp/${folders3} --recursive --exclude "*" --include ${nameshapefile}*`,
-    );
+    this.dbHelperQ.copyS3Tmp(nameshapefile, folders3);
 
     // Convert shp to postgis
     try {
@@ -84,9 +82,7 @@ export class ShapefilesService {
       this.getLayerName(nameshapefile)
         .then(async (res) => {
           // Shapefile to Postgis
-          exec(
-            `shp2pgsql -a -s 4326 -I -W "latin1" /tmp/${pathandfile} public.shapefiles | PGAPPNAME=${nameshapefile} PGPASSWORD=${this.P_PASS} psql -h ${this.P_HOST} -d ${this.P_DB} -p ${this.P_PORT} -U ${this.P_USER} `,
-          );
+          this.dbHelperQ.shapefilesToPosg(pathandfile, nameshapefile);
 
           // Insert field layername if is null
           this.dbHelperQ.shapefilesUpdate(nameshapefile);
