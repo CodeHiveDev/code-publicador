@@ -32,19 +32,13 @@ export class ShapefilesService {
     const BUCKETNAME = this.configService.get<string>('BUCKETNAME');
     this.PBUCKETNAME = BUCKETNAME;
 
-    const GEOSERVER_AUTH = this.configService.get<string>(
-      'geoserverService.SERVER_AUTH',
-    );
+    const GEOSERVER_AUTH = this.configService.get<string>('SERVER_AUTH');
     this.G_AUTH = GEOSERVER_AUTH;
 
-    const GEOSERVER_USER = this.configService.get<string>(
-      'geoserverService.SERVER_USER',
-    );
+    const GEOSERVER_USER = this.configService.get<string>('SERVER_USER');
     this.G_USER = GEOSERVER_USER;
 
-    const GEOSERVER_PASS = this.configService.get<string>(
-      'geoserverService.SERVER_PASSWORD',
-    );
+    const GEOSERVER_PASS = this.configService.get<string>('SERVER_PASSWORD');
     this.G_PASS = GEOSERVER_PASS;
 
     const POSTGRES_HOST = this.configService.get<string>('DATABASE_HOST');
@@ -97,7 +91,7 @@ export class ShapefilesService {
                 .then(async (res) => {
                   // UpLoad Style
                   // let sldfile = `/tmp/${folders3}${nameshapefile}.sld`;
-                  let sldfile = path.join(
+                  const sldfile = path.join(
                     __dirname,
                     '..',
                     '/common/files/semaforo_style.sld',
@@ -131,7 +125,7 @@ export class ShapefilesService {
 
   private async getStyle(layername) {
     return new Promise((resolve, reject) => {
-      let config = {
+      const config = {
         method: 'get',
         url: `http://${this.G_HOST}/geoserver/rest/styles/${layername}.sld`,
         headers: {
@@ -157,7 +151,7 @@ export class ShapefilesService {
 
   private async getLayerName(layername) {
     return new Promise(async (resolve, reject) => {
-      let config = {
+      const config = {
         method: 'get',
         url: `http://${this.G_HOST}/geoserver/rest/workspaces/Mineria/datastores/postgis/featuretypes/${layername}.xml`,
         headers: {
@@ -182,7 +176,8 @@ export class ShapefilesService {
   }
 
   private async publishLayer(nameshapefile, type) {
-    let func = 'publishLayer';
+    const func = 'publishLayer';
+
     let data = `<featureType>
                 <name>${nameshapefile}</name>
                 <nativeName>${nameshapefile}</nativeName>
@@ -234,18 +229,18 @@ export class ShapefilesService {
             </featureType>`;
     // Style layer
     // Post Config
-    let url = `http://${this.G_HOST}/geoserver/rest/workspaces/Mineria/datastores/postgis/featuretypes`;
-    let auth = `${this.G_AUTH}`;
+    const url = `http://${this.G_HOST}/geoserver/rest/workspaces/Mineria/datastores/postgis/featuretypes`;
+    const auth = `${this.G_AUTH}`;
     this.connection(data, 'post', url, auth, 'xml', func);
   }
 
   private async createStyle(layername) {
     return new Promise(async (resolve, reject) => {
-      let func = 'createStyle';
-      let dataStyle = `<style><name>${layername}</name><filename>${layername}.sld</filename></style>`;
-      let url = `http://${this.G_HOST}/geoserver/rest/styles`;
+      const func = 'createStyle';
+      const dataStyle = `<style><name>${layername}</name><filename>${layername}.sld</filename></style>`;
+      const url = `http://${this.G_HOST}/geoserver/rest/styles`;
 
-      let config = {
+      const config = {
         method: 'post',
         url: url,
         data: dataStyle,
@@ -272,9 +267,9 @@ export class ShapefilesService {
   }
 
   private uploadStyle(sldfile, layername) {
-    let func = 'uploadStyle';
-    let url = `http://${this.G_HOST}/geoserver/rest/styles/${layername}`; //?name=${layername}` ?raw=true
-    let auth = `${this.G_AUTH}`;
+    const func = 'uploadStyle';
+    const url = `http://${this.G_HOST}/geoserver/rest/styles/${layername}`; //?name=${layername}` ?raw=true
+    const auth = `${this.G_AUTH}`;
     // this.connection(sldfile, 'put', url, auth, 'vnd.ogc.sld+xml', func)
     // alternative with curl
     exec(
@@ -283,15 +278,15 @@ export class ShapefilesService {
   }
 
   private setLayerStyle(layername, stylename) {
-    let func = 'setLayerStyle';
-    let dataStyle = `<layer><defaultStyle><name>${stylename}</name></defaultStyle></layer>`;
-    let url = `http://${this.G_HOST}/geoserver/rest/layers/Mineria:${layername}`;
-    let auth = `${this.G_AUTH}`;
+    const func = 'setLayerStyle';
+    const dataStyle = `<layer><defaultStyle><name>${stylename}</name></defaultStyle></layer>`;
+    const url = `http://${this.G_HOST}/geoserver/rest/layers/Mineria:${layername}`;
+    const auth = `${this.G_AUTH}`;
     this.connection(dataStyle, 'put', url, auth, 'xml', func);
   }
 
   private async connection(dataIn, method, urlParams, auth, contentType, func) {
-    let configConn = {
+    const configConn = {
       method: method,
       url: urlParams,
       headers: {

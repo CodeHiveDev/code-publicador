@@ -5,7 +5,7 @@ import { DataSource } from 'typeorm';
 import * as AWS from 'aws-sdk';
 import * as path from 'path';
 
-import { writeFile, writeFileSync, mkdirSync, createWriteStream} from 'fs';
+import { mkdirSync, createWriteStream } from 'fs';
 interface DatabaseConfig {
   host: string;
   port: number;
@@ -18,11 +18,6 @@ export class dbHelper {
     private configService: ConfigService,
     @InjectDataSource() private dataSource: DataSource,
   ) {
-    AWS.config.update({
-      accessKeyId: this.configService.get<string>('ACCESS_KEY_ID'), //config.ACCESS_KEY_ID,
-      secretAccessKey: this.configService.get<string>('SECRET_ACCESS_KEY'), //config.SECRET_ACCESS_KEY,
-      region: this.configService.get<string>('AWS_REGION'), //config.AWS_REGION,
-    });
     this.s3 = new AWS.S3();
   }
 
