@@ -73,6 +73,7 @@ export class dbHelper {
         mkdirSync(`/tmp/${folders}/`, { recursive: true });
         items.forEach(async function (obj) {
           const name = obj.Key;
+          console.log(obj.Key)
           const params = {
             Bucket: `${BUCKETNAME}`,
             Key: name,

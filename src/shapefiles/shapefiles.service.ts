@@ -7,6 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import path = require('path');
 import { dbHelper } from '../helper/dbHelper';
 import { render, renderFile } from 'template-file';
+import os = require('os');
 @Injectable()
 export class ShapefilesService {
   private P_PORT: number;
@@ -17,6 +18,7 @@ export class ShapefilesService {
   private G_HOST: string;
   private G_AUTH: string;
   private G_USER: string;
+  private TEMPDIR: string;
   private G_PASS: string;
   private PBUCKETNAME: string;
   constructor(
@@ -26,9 +28,11 @@ export class ShapefilesService {
   ) {
     this.G_HOST = this.configService.get<string>('SERVER_HOST');
 
-    if (!this.G_HOST) {
-      throw new Error(`GEOSERVER variables are missing`);
-    }
+    this.TEMPDIR = os.tmpdir(); // /tmp
+    console.log(this.TEMPDIR);
+    // if (!this.G_HOST) {
+    //   throw new Error(`GEOSERVER variables are missing`);
+    // }
 
     const BUCKETNAME = this.configService.get<string>('BUCKETNAME');
     this.PBUCKETNAME = BUCKETNAME;
@@ -91,12 +95,13 @@ export class ShapefilesService {
               await this.createStyle('semaforo_style')
                 .then(async (res) => {
                   // UpLoad Style
-                  const sldfile = `/tmp/${folders3}${nameshapefile}.sld`;
+                  const sldfile = `${this.TEMPDIR}/${folders3}${nameshapefile}.sld`;
                   // const sldfile = path.join(
                   //   __dirname,
                   //   '..',
                   //   '/common/files/semaforo_style.sld',
                   // );
+                  console.log(sldfile)
                   this.uploadStyle(sldfile, 'semaforo_style');
                 })
                 .catch((error) => {
