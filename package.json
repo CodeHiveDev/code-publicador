@@ -92,9 +92,8 @@
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
   },
-  "_moduleAliases":{
-    "@modules":"dist/modules",
-    "@services":"dist/services"
-
+  "_moduleAliases": {
+    "@modules": "dist/modules",
+    "@services": "dist/services"
   }
 }

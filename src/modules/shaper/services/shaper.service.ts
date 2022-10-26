@@ -26,7 +26,6 @@ export class ShaperService {
     private configService: ConfigService,
     private GeoService: GeoserverService,
     private dbHelperQ: dbHelper,
-
   ) {
     this.G_HOST = this.configService.get<string>('SERVER_HOST');
 
@@ -74,7 +73,7 @@ export class ShaperService {
     type,
   ) {
     // Copy S3 file to a temp storage
-     this.dbHelperQ.copyS3Tmp(nameshapefile, folders3);
+    this.dbHelperQ.copyS3Tmp(nameshapefile, folders3);
 
     // Convert shp to postgis
     try {
@@ -83,58 +82,24 @@ export class ShaperService {
 
       await this.GeoService.getLayerName(`${nameshapefile}`);
 
-      // Check if exist the layer and then...
-      this.getLayerName(`${nameshapefile}_style`)
-        .then(async (res) => {
-          // Shapefile to Postgis
-          this.dbHelperQ.shapefilesToPosg(pathandfile, nameshapefile);
+      this.dbHelperQ.shapefilesToPosg(pathandfile, nameshapefile);
 
-          // Insert field layername if is null
-          //this.dbHelperQ.shapefilesUpdate(nameshapefile);
+      await this.GeoService.publishLayer(nameshapefile, type);
 
-          // Geoserver Rest Publish
-          await this.publishLayer(nameshapefile, type);
-          // Get Style If exist
-          this.getStyle(`${nameshapefile}_style`)
-            .then(async (res) => {
-              // Create Style
-              await this.createStyle(`${nameshapefile}_style`)
-                .then(async (res) => {
-                  // UpLoad Style
-                  //const sldfile = `${this.TEMDIR}/${folders3}${nameshapefile}.sld`;
-                  const sldfile = path.join(
-                    this.TEMDIR,
-                    folders3,
-                    `${nameshapefile}.sld`,
-                  );
-                  // const sldfile = path.join(
-                  //   __dirname,
-                  //   '..',
-                  //   '/common/files/semaforo_style.sld',
-                  // );
-                  this.uploadStyle(sldfile, `${nameshapefile}_style`);
-                })
-                .catch((error) => {
-                  console.log(error);
-                });
-              // Apply Style
-              await this.setLayerStyle(nameshapefile, `${nameshapefile}_style`);
+      await this.GeoService.getStyle(`${nameshapefile}_style`);
 
-              const tempdelete = path.join(this.TEMDIR, folders3);
+      await this.GeoService.createStyle(`${nameshapefile}_style`);
 
-              await fs.rmSync(tempdelete, { recursive: true, force: true });
+      const sldfile = path.join(this.TEMDIR, folders3, `${nameshapefile}.sld`);
 
-            })
-            .catch((error) => {
-              // Apply Style
-              this.setLayerStyle(nameshapefile, `${nameshapefile}_style`);
-            });
+      await this.GeoService.uploadStyle(sldfile, `${nameshapefile}_style`);
 
-          // Delete File s3 if ok
-        })
-        .catch((error) => {
-          // nothing
-        });
+      // Apply Style
+      await this.setLayerStyle(nameshapefile, `${nameshapefile}_style`);
+
+      const tempdelete = path.join(this.TEMDIR, folders3);
+
+      await fs.rmSync(tempdelete, { recursive: true, force: true });
     } catch (err) {
       console.warn('err', err);
     }
@@ -144,57 +109,6 @@ export class ShaperService {
     return 'done';
   }
 
-  private async getStyle(layername) {
-    return new Promise((resolve, reject) => {
-      const config = {
-        method: 'get',
-        url: `http://${this.G_HOST}/geoserver/rest/styles/${layername}.sld`,
-        headers: {
-          Authorization: `Basic ${this.G_AUTH}`,
-          'Content-Type': 'application/xml',
-        },
-      };
-      axios(config)
-        .then((res) => {
-          if (res.status == 200) {
-            reject('err');
-            console.warn('style exists');
-          } else {
-            resolve('no style');
-          }
-        })
-        .catch((error) => {
-          resolve('no style');
-          console.log('error en el get style geoserver');
-        });
-    });
-  }
-
-  private async getLayerName(layername) {
-    return new Promise(async (resolve, reject) => {
-      const config = {
-        method: 'get',
-        url: `http://${this.G_HOST}/geoserver/rest/workspaces/Mineria/datastores/postgis/featuretypes/${layername}.xml`,
-        headers: {
-          Authorization: `Basic ${this.G_AUTH}`,
-          'Content-Type': 'application/xml',
-        },
-      };
-      const conn = await axios(config)
-        .then((res) => {
-          return res.status;
-        })
-        .catch((error) => {
-          console.log('error en el get layer geoserver');
-        });
-      if (conn == 200 || conn == 201) {
-        console.warn('layer exists');
-        reject('layer exist');
-      } else {
-        resolve('no layer');
-      }
-    });
-  }
 
   private async publishLayer(nameshapefile, type) {
     const func = 'publishLayer';
