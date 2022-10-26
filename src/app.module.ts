@@ -1,45 +1,49 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Inject, Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-
+import { MessageModule } from '@modules/message/message.module';
+import { MessageService } from '@modules/message/services/message.service';
+import { RasterModule } from '@modules/raster/raster.module';
+import { RasterService } from '@modules/raster/services/raster.service';
+import { ShaperModule } from '@modules/shaper/shaper.module';
+import { ShaperService } from '@modules/shaper/services/shaper.service';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { TypeOrmConfigService } from './shared/typeorm/typeorm.service';
 import { ConfigModule } from '@nestjs/config';
-import QueueService from './config/db.config';
-import postgisService from './config/sqs.config';
-import geoserverService from './config/geoserver.config';
-
-import { RasterModule } from './raster/raster.module';
-import { RasterService } from './raster/raster.service';
-import { ShapefilesService } from './shapefiles/shapefiles.service';
-import { ShapefilesModule } from './shapefiles/shapefiles.module';
+import { getEnvPath } from './helper/env.helper';
 import { dbHelperModule } from './helper/dbHelper.module';
 import { dbHelper } from './helper/dbHelper';
-import { MessageService } from './message/message.service';
-import { MessageModule } from './message/message.module';
-import { getEnvPath } from './common/helper/env.helper';
-import { TypeOrmConfigService } from './shared/typeorm/typeorm.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import configuration from './config/configuration';
-const envFilePath: string = getEnvPath(`${__dirname}/common/envs`);
+import { AwsSdkModule } from 'nest-aws-sdk';
+import * as AWS from 'aws-sdk';
+import { HttpModule } from '@nestjs/axios';
+import { HttpConfigService } from '@services/httpService.config';
+import { GeoserverService } from '@services/geoserver.service';
+import { HttpService } from '@nestjs/axios';
+const envFilePath: string = getEnvPath(`${__dirname}/config/envs`);
 @Module({
   imports: [
     ConfigModule.forRoot({
       envFilePath,
       isGlobal: true,
-      load: [configuration],
     }),
-    RasterModule,
+    HttpModule.registerAsync({
+      useClass: HttpConfigService,
+    }),
     dbHelperModule,
-    ShapefilesModule,
+    RasterModule,
+    ShaperModule,
     MessageModule,
     TypeOrmModule.forRootAsync({ useClass: TypeOrmConfigService }),
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-    dbHelper,
-    RasterService,
-    ShapefilesService,
-    MessageService,
-  ],
+  providers: [AppService, GeoserverService],
 })
-export class AppModule {}
+export class AppModule {
+  constructor() {
+    AWS.config.update({
+      accessKeyId: process.env.ACCESS_KEY_ID, //config.ACCESS_KEY_ID,
+      secretAccessKey: process.env.SECRET_ACCESS_KEY, //config.SECRET_ACCESS_KEY,
+      region: process.env.AWS_REGION, //config.AWS_REGION,
+    });
+  }
+}

@@ -21,6 +21,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@nestjs/axios": "^0.1.0",
     "@nestjs/common": "^9.0.0",
     "@nestjs/config": "^2.2.0",
     "@nestjs/core": "^9.0.0",
@@ -34,7 +35,9 @@
     "class-validator": "^0.13.2",
     "dbf-reader": "^1.0.3",
     "dotenv": "^16.0.1",
+    "fs": "0.0.1-security",
     "js-yaml": "^4.1.0",
+    "module-alias": "^2.2.2",
     "nest-aws-sdk": "^3.0.0",
     "os": "^0.1.2",
     "pg": "^8.8.0",
@@ -88,5 +91,10 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
+  },
+  "_moduleAliases":{
+    "@modules":"dist/modules",
+    "@services":"dist/services"
+
   }
 }

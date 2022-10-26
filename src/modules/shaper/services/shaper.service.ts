@@ -1,15 +1,14 @@
 import { Injectable, forwardRef, Inject, ConsoleLogger } from '@nestjs/common';
-import { exec } from 'shelljs';
 import axios from 'axios';
 import * as fs from 'fs';
-import { readFileSync } from 'fs';
 import { ConfigService } from '@nestjs/config';
 import path = require('path');
-import { dbHelper } from '../helper/dbHelper';
-import { render, renderFile } from 'template-file';
 import os = require('os');
+import { dbHelper } from '../../../helper/dbHelper';
+import { GeoserverService } from '@services/geoserver.service';
+import { render, renderFile } from 'template-file';
 @Injectable()
-export class ShapefilesService {
+export class ShaperService {
   private P_PORT: number;
   private P_HOST: string;
   private P_USER: string;
@@ -18,21 +17,26 @@ export class ShapefilesService {
   private G_HOST: string;
   private G_AUTH: string;
   private G_USER: string;
-  private TEMPDIR: string;
   private G_PASS: string;
   private PBUCKETNAME: string;
+  private TEMDIR: string;
+  private TPLDIR: string;
   constructor(
     @Inject(forwardRef(() => ConfigService))
     private configService: ConfigService,
+    private GeoService: GeoserverService,
     private dbHelperQ: dbHelper,
+
   ) {
     this.G_HOST = this.configService.get<string>('SERVER_HOST');
 
-    this.TEMPDIR = os.tmpdir(); // /tmp
-    console.log(this.TEMPDIR);
-    // if (!this.G_HOST) {
-    //   throw new Error(`GEOSERVER variables are missing`);
-    // }
+    // get temp directory
+    this.TEMDIR = os.tmpdir(); // /tmp
+    this.TPLDIR = path.join(__dirname, '..', '..', 'tpl');
+
+    if (!this.G_HOST) {
+      throw new Error(`GEOSERVER variables are missing`);
+    }
 
     const BUCKETNAME = this.configService.get<string>('BUCKETNAME');
     this.PBUCKETNAME = BUCKETNAME;
@@ -70,15 +74,17 @@ export class ShapefilesService {
     type,
   ) {
     // Copy S3 file to a temp storage
-    this.dbHelperQ.copyS3Tmp(nameshapefile, folders3);
+     this.dbHelperQ.copyS3Tmp(nameshapefile, folders3);
 
     // Convert shp to postgis
     try {
       // Create table
       //this.dbHelperQ.createTable(nameshapefile);
 
+      await this.GeoService.getLayerName(`${nameshapefile}`);
+
       // Check if exist the layer and then...
-      this.getLayerName(nameshapefile)
+      this.getLayerName(`${nameshapefile}_style`)
         .then(async (res) => {
           // Shapefile to Postgis
           this.dbHelperQ.shapefilesToPosg(pathandfile, nameshapefile);
@@ -89,30 +95,39 @@ export class ShapefilesService {
           // Geoserver Rest Publish
           await this.publishLayer(nameshapefile, type);
           // Get Style If exist
-          this.getStyle('semaforo_style')
+          this.getStyle(`${nameshapefile}_style`)
             .then(async (res) => {
               // Create Style
-              await this.createStyle('semaforo_style')
+              await this.createStyle(`${nameshapefile}_style`)
                 .then(async (res) => {
                   // UpLoad Style
-                  const sldfile = `${this.TEMPDIR}/${folders3}${nameshapefile}.sld`;
+                  //const sldfile = `${this.TEMDIR}/${folders3}${nameshapefile}.sld`;
+                  const sldfile = path.join(
+                    this.TEMDIR,
+                    folders3,
+                    `${nameshapefile}.sld`,
+                  );
                   // const sldfile = path.join(
                   //   __dirname,
                   //   '..',
                   //   '/common/files/semaforo_style.sld',
                   // );
-                  console.log(sldfile)
-                  this.uploadStyle(sldfile, 'semaforo_style');
+                  this.uploadStyle(sldfile, `${nameshapefile}_style`);
                 })
                 .catch((error) => {
                   console.log(error);
                 });
               // Apply Style
-              await this.setLayerStyle(nameshapefile, 'semaforo_style');
+              await this.setLayerStyle(nameshapefile, `${nameshapefile}_style`);
+
+              const tempdelete = path.join(this.TEMDIR, folders3);
+
+              await fs.rmSync(tempdelete, { recursive: true, force: true });
+
             })
             .catch((error) => {
               // Apply Style
-              this.setLayerStyle(nameshapefile, 'semaforo_style');
+              this.setLayerStyle(nameshapefile, `${nameshapefile}_style`);
             });
 
           // Delete File s3 if ok
@@ -185,6 +200,7 @@ export class ShapefilesService {
     const func = 'publishLayer';
 
     const appRoot = path.resolve(__dirname);
+
     const dataType = {
       nameshapefile: nameshapefile,
       G_HOST: this.G_HOST,
@@ -192,11 +208,8 @@ export class ShapefilesService {
     };
 
     // Replace variables in a file (same as above, but from a file)
-    const data = await renderFile(
-      `${appRoot}/assest/featureType.tpl`,
-      dataType,
-    );
-    //console.log(data);
+    const data = await renderFile(`${this.TPLDIR}/featureType.tpl`, dataType);
+    console.log(data);
 
     // Style layer
     // Post Config
@@ -241,8 +254,12 @@ export class ShapefilesService {
     const func = 'uploadStyle';
     const url = `http://${this.G_HOST}/geoserver/rest/styles/${layername}`; //?name=${layername}` ?raw=true
     const auth = `${this.G_AUTH}`;
-    const style = fs.readFileSync(sldfile, { encoding: 'utf8' });
-    this.connection(style, 'put', url, auth, 'vnd.ogc.sld+xml', func);
+    try {
+      const style = fs.readFileSync(sldfile, { encoding: 'utf-8' });
+      this.connection(style, 'put', url, auth, 'vnd.ogc.sld+xml', func);
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   private setLayerStyle(layername, stylename) {

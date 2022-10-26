@@ -1,21 +1,21 @@
 import { Inject, Injectable, forwardRef, SetMetadata } from '@nestjs/common';
 import { SqsMessageHandler, SqsConsumerEventHandler } from '@ssut/nestjs-sqs';
 import * as AWS from 'aws-sdk';
-import { RasterService } from '../raster/raster.service';
-import { ShapefilesService } from '../shapefiles/shapefiles.service';
+import { RasterService } from '@modules/raster/services/raster.service';
+import { ShaperService } from '@modules/shaper/services/shaper.service';
+
 import { ConfigService } from '@nestjs/config';
 
 //const mivar2 = process.env.QUEUE
 const SQS_CONSUMER_METHOD = Symbol.for('SQS_CONSUMER_METHOD');
-
 @Injectable()
 export class MessageService {
   private port: number;
   private queueName: string;
 
   constructor(
-    @Inject(forwardRef(() => ShapefilesService))
-    private shapefilesService: ShapefilesService,
+    @Inject(forwardRef(() => ShaperService))
+    private ShaperService: ShaperService,
     @Inject(forwardRef(() => RasterService))
     private rasterService: RasterService,
     @Inject(forwardRef(() => ConfigService))
@@ -59,7 +59,7 @@ export class MessageService {
 
     // Traer todos los archivos de esa extension
     if (sms.type === 'shp')
-      this.shapefilesService.shapeHandler(
+      this.ShaperService.shapeHandler(
         Objectfile,
         pathandfile,
         sms.folder,
