@@ -98,6 +98,7 @@ export class GeoserverService {
         this.httpService.put(
           `http://${this.host}/geoserver/rest/styles/${nameshapefile}`,
           style,
+          { headers: { 'Content-Type': `application/vnd.ogc.sld+xml` } },
         ),
       );
 
