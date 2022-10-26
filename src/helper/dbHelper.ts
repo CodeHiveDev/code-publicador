@@ -57,22 +57,28 @@ export class dbHelper {
 
   }
   public async copyS3Tmp(nameshapefile: string, folders: string) {
+    console.log("copyS3TmpcopyS3Tmp");
     const BUCKETNAME = this.configService.get<string>('BUCKETNAME');
     const S3 = this.s3;
     const options = {
       Bucket: `${BUCKETNAME}`,
       Prefix: `${folders}`,
     };
+    
     S3.listObjectsV2(options, function (err, data) {
       if (err) {
-        console.log(err);
+        console.log("err",err);
       } else {
+      
+
         const items = data['Contents'].filter((item) =>
           item.Key.includes(`${nameshapefile}.`),
         );
+        
         mkdirSync(`/tmp/${folders}/`, { recursive: true });
         items.forEach(async function (obj) {
           const name = obj.Key;
+          console.log(name)
           const params = {
             Bucket: `${BUCKETNAME}`,
             Key: name,
@@ -86,5 +92,7 @@ export class dbHelper {
         });
       }
     });
+    console.log("copyS3TmpcopyS3Tmp");
+
   }
 }

@@ -1,10 +1,10 @@
 {
   "action": { "DataType": "String", "StringValue": "shapefile" },
-  "folder": { "DataType": "String", "StringValue": "publicador/semaforo2/" },
+  "folder": { "DataType": "String", "StringValue": "publicador/semaforo/" },
   "multiplesfiles": { "DataType": "String", "StringValue": "false" },
   "filename": {
     "DataType": "String",
-    "StringValue": "semaforo_canteras_faja4"
+    "StringValue": "semaforo_canteras_faja3"
   },
   "type": { "DataType": "String", "StringValue": "shp" }
 }

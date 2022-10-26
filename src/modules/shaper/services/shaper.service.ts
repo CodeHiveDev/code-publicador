@@ -73,42 +73,40 @@ export class ShaperService {
     type,
   ) {
     // Copy S3 file to a temp storage
-    this.dbHelperQ.copyS3Tmp(nameshapefile, folders3);
+    await this.dbHelperQ.copyS3Tmp(nameshapefile, folders3);
 
     // Convert shp to postgis
-    try {
-      // Create table
-      //this.dbHelperQ.createTable(nameshapefile);
+    // Create table
+    //this.dbHelperQ.createTable(nameshapefile);
 
-      await this.GeoService.getLayerName(`${nameshapefile}`);
+    await this.GeoService.getLayerName(`${nameshapefile}`);
 
-      this.dbHelperQ.shapefilesToPosg(pathandfile, nameshapefile);
+    this.dbHelperQ.shapefilesToPosg(pathandfile, nameshapefile);
 
-      await this.GeoService.publishLayer(nameshapefile, type);
+    await this.GeoService.publishLayer(nameshapefile, type);
 
-      await this.GeoService.getStyle(`${nameshapefile}_style`);
+    await this.GeoService.getStyle(`${nameshapefile}_style`);
 
-      await this.GeoService.createStyle(`${nameshapefile}_style`);
+    await this.GeoService.createStyle(`${nameshapefile}_style`);
 
-      const sldfile = path.join(this.TEMDIR, folders3, `${nameshapefile}.sld`);
+    const sldfile = path.join(this.TEMDIR, folders3, `${nameshapefile}.sld`);
 
-      await this.GeoService.uploadStyle(sldfile, `${nameshapefile}_style`);
+    await this.GeoService.uploadStyle(sldfile, `${nameshapefile}_style`);
 
-      // Apply Style
-      await this.setLayerStyle(nameshapefile, `${nameshapefile}_style`);
+    // Apply Style
+    await this.GeoService.setLayerStyle(
+      nameshapefile,
+      `${nameshapefile}_style`,
+    );
 
-      const tempdelete = path.join(this.TEMDIR, folders3);
+    const tempdelete = path.join(this.TEMDIR, folders3);
 
-      await fs.rmSync(tempdelete, { recursive: true, force: true });
-    } catch (err) {
-      console.warn('err', err);
-    }
+    //await fs.rmSync(tempdelete, { recursive: true, force: true });
 
     // Delete layer if need
     // DELETE http://<url>/geoserver/rest/workspaces/<workspaceName>/coveragestores/<storeName>/coverages/<layerName>?recurse=true
     return 'done';
   }
-
 
   private async publishLayer(nameshapefile, type) {
     const func = 'publishLayer';

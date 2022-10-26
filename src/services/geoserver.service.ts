@@ -6,6 +6,7 @@ import * as fs from 'fs';
 import { ConfigService } from '@nestjs/config';
 import path = require('path');
 import { renderFile } from 'template-file';
+import { response } from 'express';
 
 @Injectable()
 export class GeoserverService {
@@ -21,56 +22,73 @@ export class GeoserverService {
   host = this.configService.get<string>('SERVER_HOST');
 
   async getLayerName(layername: any) {
-    const { data, status } = await firstValueFrom(
-      this.httpService.get(
-        `http://${this.host}/geoserver/rest/workspaces/Mineria/datastores/postgis/featuretypes/${layername}.xml`,
-      ),
-    );
-    if (status == 200) {
+    try {
+      const { data, status } = await firstValueFrom(
+        this.httpService.get(
+          `http://${this.host}/geoserver/rest/workspaces/Mineria/datastores/postgis/featuretypes/${layername}.xml`,
+        ),
+      );
       return data;
+    } catch (e) {
+      console.log('Error GetLayerName: ', e.message);
+      return true;
     }
   }
 
   async publishLayer(layername: any, type: any) {
-    const dataType = {
-      nameshapefile: layername,
-      G_HOST: this.host,
-      type: type,
-    };
-    const datas = await renderFile(`${this.TPLDIR}/featureType.tpl`, dataType);
-    const { data, status } = await firstValueFrom(
-      this.httpService.post(
-        `http://${this.host}/geoserver/rest/workspaces/Mineria/datastores/postgis/featuretypes`,
-        datas,
-      ),
-    );
-    if (status == 200) {
+    try {
+      const dataType = {
+        nameshapefile: layername,
+        G_HOST: this.host,
+        type: type,
+      };
+      const datas = await renderFile(
+        `${this.TPLDIR}/featureType.tpl`,
+        dataType,
+      );
+      const { data, status } = await firstValueFrom(
+        this.httpService.post(
+          `http://${this.host}/geoserver/rest/workspaces/Mineria/datastores/postgis/featuretypes`,
+          datas,
+        ),
+      );
       return data;
+    } catch (e) {
+      console.log('Error PublishLayer: ', e.message);
+
+      return true;
     }
   }
 
   async getStyle(layername: any) {
-    const { data, status } = await firstValueFrom(
-      this.httpService.get(
-        `http://${this.host}/geoserver/rest/styles/${layername}.sld`,
-      ),
-    );
-    console.log(status);
-    if (status == 200) {
+    try {
+      const { data, status } = await firstValueFrom(
+        this.httpService.get(
+          `http://${this.host}/geoserver/rest/styles/${layername}.sld`,
+        ),
+      );
       return data;
+    } catch (e) {
+      console.log('Error GetStyle: ', e.message);
+      return true;
     }
   }
   async createStyle(layername: any) {
-    const dataStyle = `<style><name>${layername}</name><filename>${layername}.sld</filename></style>`;
+    try {
+      const dataStyle = `<style><name>${layername}</name><filename>${layername}.sld</filename></style>`;
 
-    const { data, status } = await firstValueFrom(
-      this.httpService.post(
-        `http://${this.host}/geoserver/rest/styles`,
-        dataStyle,
-      ),
-    );
-    if (status == 200) {
+      const { data, status } = await firstValueFrom(
+        this.httpService.post(
+          `http://${this.host}/geoserver/rest/styles`,
+          dataStyle,
+        ),
+      );
+
       return data;
+    } catch (e) {
+      console.log('Error createStyle: ', e.message);
+
+      return true;
     }
   }
   async uploadStyle(sldfile: any, nameshapefile: any) {
@@ -83,11 +101,29 @@ export class GeoserverService {
         ),
       );
 
-      if (status == 200) {
-        return data;
-      }
+      return data;
     } catch (e) {
-      console.log(e);
+      console.log('Error uploadStyle: ', e.message);
+
+      return true;
+    }
+  }
+
+  async setLayerStyle(layername: any, stylename: any) {
+    try {
+      const dataStyle = `<layer><defaultStyle><name>${stylename}</name></defaultStyle></layer>`;
+      const { data, status } = await firstValueFrom(
+        this.httpService.put(
+          `http://${this.host}/geoserver/rest/layers/Mineria:${layername}`,
+          dataStyle,
+        ),
+      );
+
+      return data;
+    } catch (e) {
+      console.log('Error uploadStyle: ', e.message);
+
+      return true;
     }
   }
 }
