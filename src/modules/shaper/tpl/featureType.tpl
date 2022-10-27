@@ -3,7 +3,7 @@
     <nativeName>{{nameshapefile}}</nativeName>
     <namespace>
         <name>Mineria</name>
-        <atom:link xmlns:atom="http://www.w3.org/2005/Atom" rel="alternate" href="http://${this.G_HOST}/geoserver/rest/namespaces/Mineria.xml" type="application/xml"/>
+        <atom:link xmlns:atom="http://www.w3.org/2005/Atom" rel="alternate" href="http://{{G_HOST}}/geoserver/rest/namespaces/Mineria.xml" type="application/xml"/>
     </namespace>
     <title>{{nameshapefile}}</title>
     <keywords>
@@ -42,7 +42,7 @@
     </metadata>
     <store class="dataStore">
         <name>postgis</name>
-        <atom:link xmlns:atom="http://www.w3.org/2005/Atom" rel="alternate" href="http://${this.G_HOST}/geoserver/rest/workspaces/Mineria/datastores/postgis.xml" type="application/xml"/>
+        <atom:link xmlns:atom="http://www.w3.org/2005/Atom" rel="alternate" href="http://{{G_HOST}}/geoserver/rest/workspaces/Mineria/datastores/postgis.xml" type="application/xml"/>
     </store>
     <maxFeatures>0</maxFeatures>
     <numDecimals>0</numDecimals>

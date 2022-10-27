@@ -41,44 +41,45 @@ export class dbHelper {
 
   //Shapefile to Postgis
   public async shapefilesToPosg(pathandfile: string, nameshapefile: string) {
-    // this.dataSource.query(
-    //   `shp2pgsql -a -s 4326 -I -W "latin1" /tmp/${pathandfile} public.shapefiles | PGAPPNAME=${nameshapefile} PGPASSWORD=${this.configService.get<string>(
-    //     'DATABASE_PASSWORD',
-    //   )} psql -h ${this.configService.get<string>(
-    //     'DATABASE_HOST',
-    //   )} -d ${this.configService.get<string>(
-    //     'DATABASE_NAME',
-    //   )} -p ${this.configService.get<string>(
-    //     'DATABASE_PORT',
-    //   )} -U ${this.configService.get<string>('DATABASE_USER')} `,
-    // ); 
-
-    exec('shp2pgsql -a -s 4326 -I -W "latin1" /tmp/' + pathandfile + ' public.shapefiles | PGAPPNAME="'+nameshapefile+'" PGPASSWORD='+process.env.PGPASSWORD+' psql -h '+process.env.DATABASE_HOST+' -d '+process.env.POSTGRES_DB+' -p '+process.env.POSTGRES_PORT+' -U '+process.env.POSTGRES_USER+' ');
-
+    exec(
+      'shp2pgsql -a -s 4326 -I -W "latin1" /tmp/' +
+        pathandfile +
+        ' public.shapefiles | PGAPPNAME="' +
+        nameshapefile +
+        '" PGPASSWORD=' +
+        process.env.PGPASSWORD +
+        ' psql -h ' +
+        process.env.DATABASE_HOST +
+        ' -d ' +
+        process.env.POSTGRES_DB +
+        ' -p ' +
+        process.env.POSTGRES_PORT +
+        ' -U ' +
+        process.env.POSTGRES_USER +
+        ' ',
+    );
   }
   public async copyS3Tmp(nameshapefile: string, folders: string) {
-    console.log("copyS3TmpcopyS3Tmp");
+    console.log('copyS3TmpcopyS3Tmp');
     const BUCKETNAME = this.configService.get<string>('BUCKETNAME');
     const S3 = this.s3;
     const options = {
       Bucket: `${BUCKETNAME}`,
       Prefix: `${folders}`,
     };
-    
-    S3.listObjectsV2(options, function (err, data) {
-      if (err) {
-        console.log("err",err);
-      } else {
-      
 
+    await S3.listObjectsV2(options, function (err, data) {
+      if (err) {
+        console.log('err', err);
+      } else {
         const items = data['Contents'].filter((item) =>
           item.Key.includes(`${nameshapefile}.`),
         );
-        
+
         mkdirSync(`/tmp/${folders}/`, { recursive: true });
         items.forEach(async function (obj) {
           const name = obj.Key;
-          console.log(name)
+          console.log(name);
           const params = {
             Bucket: `${BUCKETNAME}`,
             Key: name,
@@ -92,7 +93,6 @@ export class dbHelper {
         });
       }
     });
-    console.log("copyS3TmpcopyS3Tmp");
-
+    console.log('copyS3TmpcopyS3Tmp');
   }
 }

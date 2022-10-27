@@ -81,7 +81,7 @@ export class ShaperService {
 
     await this.GeoService.getLayerName(`${nameshapefile}`);
 
-    this.dbHelperQ.shapefilesToPosg(pathandfile, nameshapefile);
+    await this.dbHelperQ.shapefilesToPosg(pathandfile, nameshapefile);
 
     await this.GeoService.publishLayer(nameshapefile, type);
 
@@ -90,7 +90,7 @@ export class ShaperService {
     await this.GeoService.createStyle(`${nameshapefile}_style`);
 
     const sldfile = path.join(this.TEMDIR, folders3, `${nameshapefile}.sld`);
-    console.log(sldfile)
+    console.log(sldfile);
     await this.GeoService.uploadStyle(sldfile, `${nameshapefile}_style`);
 
     // Apply Style
@@ -101,7 +101,7 @@ export class ShaperService {
 
     const tempdelete = path.join(this.TEMDIR, folders3);
 
-    await fs.rmSync(tempdelete, { recursive: true, force: true });
+    //await fs.rmSync(tempdelete, { recursive: true, force: true });
 
     // Delete layer if need
     // DELETE http://<url>/geoserver/rest/workspaces/<workspaceName>/coveragestores/<storeName>/coverages/<layerName>?recurse=true
