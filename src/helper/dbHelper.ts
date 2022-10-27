@@ -24,18 +24,56 @@ export class dbHelper {
 
   //Create table
   public async createTable(nameshapefile: string) {
-    const query = await this.dataSource.query(
-      `CREATE TABLE IF NOT EXISTS public.shapefiles ( idshapefile serial NOT NULL, id_0 integer NOT NULL, layername varchar(100), expediente text, categoria text, fecha date, geom geometry, PRIMARY KEY (idshapefile))`,
-    );
-    this.dataSource.query(
-      `ALTER TABLE public.shapefiles ADD COLUMN IF NOT EXISTS layername varchar(100) DEFAULT ${nameshapefile}`,
+    exec(
+      'PGPASSWORD=' +
+        process.env.PGPASSWORD +
+        ' psql -h ' +
+        process.env.DATABASE_HOST +
+        ' -d ' +
+        process.env.POSTGRES_DB +
+        ' -p ' +
+        process.env.POSTGRES_PORT +
+        ' -U ' +
+        process.env.POSTGRES_USER +
+        ' -c "CREATE TABLE IF NOT EXISTS public.shapefiles ( idshapefile serial NOT NULL, id_0 integer NOT NULL, layername varchar(100), expediente text, categoria text, fecha date, geom geometry, PRIMARY KEY (idshapefile))" ',
+    ); // -f "createshapefile" sql query
+    // Altern Table add column
+    exec(
+      'PGPASSWORD=' +
+        process.env.PGPASSWORD +
+        ' psql -h ' +
+        process.env.DATABASE_HOST +
+        ' -d ' +
+        process.env.POSTGRES_DB +
+        ' -p ' +
+        process.env.POSTGRES_PORT +
+        ' -U ' +
+        process.env.POSTGRES_USER +
+        ' -c "ALTER TABLE public.shapefiles ADD COLUMN IF NOT EXISTS layername varchar(100) DEFAULT ' +
+        nameshapefile +
+        ' " ',
     );
   }
 
   //Create table
   public async shapefilesUpdate(nameshapefile: string) {
-    this.dataSource.query(
-      `UPDATE public.shapefiles SET layername =  ${nameshapefile} WHERE layername IS NULL`,
+    // Insert field layername if is null
+    exec(
+      'PGPASSWORD=' +
+        process.env.PGPASSWORD +
+        ' psql -h ' +
+        process.env.DATABASE_HOST +
+        ' -d ' +
+        process.env.POSTGRES_DB +
+        ' -p ' +
+        process.env.POSTGRES_PORT +
+        ' -U ' +
+        process.env.POSTGRES_USER +
+        ' -c "UPDATE public.shapefiles SET layername = ' +
+        "'" +
+        nameshapefile +
+        "'" +
+        ' WHERE layername IS NULL" ',
     ); //AND fecha = atributo fecha
   }
 
@@ -59,6 +97,51 @@ export class dbHelper {
         ' ',
     );
   }
+  public async copyS3execTmp(nameshapefile: string, folders: string) {
+    const BUCKETNAME = this.configService.get<string>('BUCKETNAME');
+    exec(
+      `aws s3 cp s3://${BUCKETNAME}/${folders} /tmp/${folders} --recursive --exclude "*" --include "${nameshapefile}*" --profile invap`,
+    );
+  }
+
+  public async s3download(nameshapefile: string, folders: string) {
+    const BUCKETNAME = this.configService.get<string>('BUCKETNAME');
+    const S3 = this.s3;
+    return new Promise((resolve, reject) => {
+      const options = {
+        Bucket: `${BUCKETNAME}`,
+        Prefix: `${folders}`,
+      };
+      S3.listObjectsV2(options)
+        .promise()
+        .then((obj) => {
+          const items = obj['Contents'].filter((item) =>
+            item.Key.includes(`${nameshapefile}.`),
+          );
+          mkdirSync(`/tmp/${folders}/`, { recursive: true });
+          items.forEach((element) => {
+            const name = element.Key;
+            console.log('Descargando... ', name);
+            const params = {
+              Bucket: `${BUCKETNAME}`,
+              Key: name,
+            };
+
+            S3.getObject(params)
+              .createReadStream()
+              .pipe(
+                createWriteStream(
+                  path.join(`/tmp/${folders}/`, name.split('/')[2]),
+                ),
+              )
+              .on('close', () => {
+                resolve(path.join(`/tmp/${folders}/`, name.split('/')[2]));
+              });
+          });
+          //console.log(items)
+        });
+    });
+  }
   public async copyS3Tmp(nameshapefile: string, folders: string) {
     console.log('copyS3TmpcopyS3Tmp');
     const BUCKETNAME = this.configService.get<string>('BUCKETNAME');
@@ -77,22 +160,28 @@ export class dbHelper {
         );
 
         mkdirSync(`/tmp/${folders}/`, { recursive: true });
-        items.forEach(async function (obj) {
+        items.forEach((obj) => {
           const name = obj.Key;
-          console.log(name);
+          console.log('Descargando... ', name);
           const params = {
             Bucket: `${BUCKETNAME}`,
             Key: name,
           };
-          const rs = S3.getObject(params).createReadStream();
-          const ws = createWriteStream(
-            path.join(`/tmp/${folders}/`, name.split('/')[2]),
-          );
 
-          rs.pipe(ws);
+          return new Promise((resolve, reject) => {
+            S3.getObject(params)
+              .createReadStream()
+              .pipe(
+                createWriteStream(
+                  path.join(`/tmp/${folders}/`, name.split('/')[2]),
+                ),
+              )
+              .on('close', () => {
+                resolve(path.join(`/tmp/${folders}/`, name.split('/')[2]));
+              });
+          });
         });
       }
     });
-    console.log('copyS3TmpcopyS3Tmp');
   }
 }

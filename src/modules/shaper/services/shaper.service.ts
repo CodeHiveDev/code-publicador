@@ -73,15 +73,17 @@ export class ShaperService {
     type,
   ) {
     // Copy S3 file to a temp storage
-    await this.dbHelperQ.copyS3Tmp(nameshapefile, folders3);
-
+    //await this.dbHelperQ.copyS3execTmp(nameshapefile, folders3);
+    await this.dbHelperQ.s3download(nameshapefile, folders3);
     // Convert shp to postgis
     // Create table
-    //this.dbHelperQ.createTable(nameshapefile);
+    await this.dbHelperQ.createTable(nameshapefile);
 
     await this.GeoService.getLayerName(`${nameshapefile}`);
 
     await this.dbHelperQ.shapefilesToPosg(pathandfile, nameshapefile);
+
+    await this.dbHelperQ.shapefilesUpdate(nameshapefile);
 
     await this.GeoService.publishLayer(nameshapefile, type);
 
