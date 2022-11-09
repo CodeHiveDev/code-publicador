@@ -21,20 +21,20 @@ export class RasterService {
 
   public async rasterHandler(fileraster: any, pathraster, folder, nameraster, type) {
     //console.log("the raster", fileraster)
-    console.log('the raster', pathraster);
+    console.log('the raster', folder);
 
     const items = await this.dbHelperQ.s3downloadRaster(type, folder);
 
+    items.forEach((element) => {
+     
+      const name = element.Key.split('/')[2];
+      console.log(name);
 
+    });
 
+    const fileZip = await this.dbHelperQ.createZipArchive();
 
-
-
-
-
-
-
-
+    this.GeoService.uploadRaster(fileZip, type);
 
     // exec(
     //   'aws s3 cp s3://ho-backend-content-dev/' +
@@ -46,7 +46,5 @@ export class RasterService {
     //     pathraster +
     //     ' -F -t 256x256 public.rasters | PGPASSWORD=postgres psql -h 172.17.26.18 -d georaster -p 5436 -U postgres ',
     // );
-
-    return 'done';
   }
 }

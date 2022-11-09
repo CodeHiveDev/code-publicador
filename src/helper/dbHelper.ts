@@ -5,7 +5,7 @@ import { DataSource } from 'typeorm';
 import { exec } from 'shelljs';
 import * as AWS from 'aws-sdk';
 import * as path from 'path';
-
+import * as AdmZip from 'adm-zip';
 import { mkdirSync, createWriteStream } from 'fs';
 interface DatabaseConfig {
   host: string;
@@ -145,7 +145,8 @@ export class dbHelper {
   public async s3downloadRaster(type: string, folders: string) {
     const BUCKETNAME = this.configService.get<string>('BUCKETNAME');
     const S3 = this.s3;
-    return new Promise((resolve, reject) => {
+    let itemsR;
+    await new Promise((resolve, reject) => {
       const options = {
         Bucket: `${BUCKETNAME}`,
         Prefix: `${folders}`,
@@ -153,11 +154,9 @@ export class dbHelper {
       S3.listObjectsV2(options)
         .promise()
         .then((obj) => {
-          const items = obj['Contents'].filter((item) =>
-            item.Key.includes(`.${type}`),
-          );
+          itemsR = obj['Contents'];
           mkdirSync(`/tmp/${folders}/`, { recursive: true });
-          items.forEach((element) => {
+          itemsR.forEach((element) => {
             const name = element.Key;
             console.log('Descargando... ', name);
             const params = {
@@ -177,9 +176,10 @@ export class dbHelper {
               });
           });
           //console.log(items)
-          return items
+          return itemsR;
         });
     });
+    return itemsR;
   }
   public async copyS3Tmp(nameshapefile: string, folders: string) {
     console.log('copyS3TmpcopyS3Tmp');
@@ -222,5 +222,18 @@ export class dbHelper {
         });
       }
     });
+  }
+
+  public async createZipArchive() {
+    try {
+      const zip =  new AdmZip();
+      const outputFile = "/tmp/publicador/rasters/rasters.zip";
+      zip.addLocalFolder("/tmp/publicador/rasters");
+      zip.writeZip(outputFile);
+      console.log(`Created ${outputFile} successfully`);
+      return outputFile;
+    } catch (e) {
+      console.log(`Something went wrong. ${e}`);
+    }
   }
 }

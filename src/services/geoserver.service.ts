@@ -22,7 +22,7 @@ export class GeoserverService {
     this.TPLDIR = path.join(__dirname, '..', 'modules', 'shaper', 'tpl');
     console.log('this.TPLDIR', this.TPLDIR);
     console.log('SERVER_HOST', this.configService.get<string>('DATABASE_HOST'));
-    this.WORKSPACE = this.configService.get<string>('WORKSPACES');
+    this.WORKSPACE = this.configService.get<string>('WORKSPACE');
     this.STORE = this.configService.get<string>('STORE');
   }
   host = this.configService.get<string>('SERVER_HOST');
@@ -155,10 +155,9 @@ export class GeoserverService {
 
   async uploadRaster(file: any, type: any) {
     try {
-
       const pathfile = `${this.WORKSPACE}/${this.STORE}/${file}`;
 
-      const fileZip = fs.createReadStream(`/temp/${pathfile}`)
+      const fileZip = fs.createReadStream(`${file}`);
 
       const { data, status } = await firstValueFrom(
         this.httpService.post(
@@ -169,7 +168,7 @@ export class GeoserverService {
       );
       return data;
     } catch (e) {
-      console.log('Error PublishLayer: ', e.message);
+      console.log('Error PublishLayer: ', e);
 
       return true;
     }
