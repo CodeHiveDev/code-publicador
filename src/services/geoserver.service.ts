@@ -12,6 +12,8 @@ import console = require('console');
 @Injectable()
 export class GeoserverService {
   private TPLDIR: string;
+  private WORKSPACE:string;
+  private STORE:string;
   constructor(
     @Inject(forwardRef(() => ConfigService))
     private configService: ConfigService,
@@ -19,6 +21,9 @@ export class GeoserverService {
   ) {
     this.TPLDIR = path.join(__dirname, '..', 'modules', 'shaper', 'tpl');
     console.log('this.TPLDIR', this.TPLDIR);
+    console.log('SERVER_HOST', this.configService.get<string>('DATABASE_HOST'));
+    this.WORKSPACE = this.configService.get<string>('WORKSPACES');
+    this.STORE = this.configService.get<string>('STORE');
   }
   host = this.configService.get<string>('SERVER_HOST');
 
@@ -128,4 +133,46 @@ export class GeoserverService {
       return true;
     }
   }
+  async publishRaster(file: any, type: any) {
+    try {
+
+      const datafile = `${this.WORKSPACE}/${this.STORE}/${file}`;
+
+      const { data, status } = await firstValueFrom(
+        this.httpService.post(
+          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${this.STORE}/external.imagemosaic?recalculate=nativebbox,latlonbbox`,
+          datafile,
+          { headers: { 'Content-Type': `text/plain` } },
+        ),
+      );
+      return data;
+    } catch (e) {
+      console.log('Error PublishLayer: ', e.message);
+
+      return true;
+    }
+  }
+
+  async uploadRaster(file: any, type: any) {
+    try {
+
+      const pathfile = `${this.WORKSPACE}/${this.STORE}/${file}`;
+
+      const fileZip = fs.createReadStream(`/temp/${pathfile}`)
+
+      const { data, status } = await firstValueFrom(
+        this.httpService.post(
+          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${this.STORE}/file.imagemosaic?configure=false`,
+          fileZip,
+          { headers: { 'Content-Type': `application/zip` } },
+        ),
+      );
+      return data;
+    } catch (e) {
+      console.log('Error PublishLayer: ', e.message);
+
+      return true;
+    }
+  }
+
 }

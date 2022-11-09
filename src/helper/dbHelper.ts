@@ -104,6 +104,13 @@ export class dbHelper {
     );
   }
 
+  public async copyToGeoserver(file: string, folders: string) {
+    const BUCKETNAME = this.configService.get<string>('BUCKETNAME');
+    exec(
+      `aws s3 cp s3://${BUCKETNAME}/${folders} /tmp/${folders} --recursive --exclude "*" --include "${nameshapefile}*" --profile invap`,
+    );
+  }
+
   public async s3download(nameshapefile: string, folders: string) {
     const BUCKETNAME = this.configService.get<string>('BUCKETNAME');
     const S3 = this.s3;
@@ -139,6 +146,45 @@ export class dbHelper {
               });
           });
           //console.log(items)
+        });
+    });
+  }
+  public async s3downloadRaster(type: string, folders: string) {
+    const BUCKETNAME = this.configService.get<string>('BUCKETNAME');
+    const S3 = this.s3;
+    return new Promise((resolve, reject) => {
+      const options = {
+        Bucket: `${BUCKETNAME}`,
+        Prefix: `${folders}`,
+      };
+      S3.listObjectsV2(options)
+        .promise()
+        .then((obj) => {
+          const items = obj['Contents'].filter((item) =>
+            item.Key.includes(`.${type}`),
+          );
+          mkdirSync(`/tmp/${folders}/`, { recursive: true });
+          items.forEach((element) => {
+            const name = element.Key;
+            console.log('Descargando... ', name);
+            const params = {
+              Bucket: `${BUCKETNAME}`,
+              Key: name,
+            };
+
+            S3.getObject(params)
+              .createReadStream()
+              .pipe(
+                createWriteStream(
+                  path.join(`/tmp/${folders}/`, name.split('/')[2]),
+                ),
+              )
+              .on('close', () => {
+                resolve(path.join(`/tmp/${folders}/`, name.split('/')[2]));
+              });
+          });
+          //console.log(items)
+          return items
         });
     });
   }
