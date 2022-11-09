@@ -104,13 +104,6 @@ export class dbHelper {
     );
   }
 
-  public async copyToGeoserver(file: string, folders: string) {
-    const BUCKETNAME = this.configService.get<string>('BUCKETNAME');
-    exec(
-      `aws s3 cp s3://${BUCKETNAME}/${folders} /tmp/${folders} --recursive --exclude "*" --include "${nameshapefile}*" --profile invap`,
-    );
-  }
-
   public async s3download(nameshapefile: string, folders: string) {
     const BUCKETNAME = this.configService.get<string>('BUCKETNAME');
     const S3 = this.s3;
