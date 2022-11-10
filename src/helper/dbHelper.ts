@@ -154,7 +154,7 @@ export class dbHelper {
         .promise()
         .then((obj) => {
           itemsR = obj['Contents'];
-          mkdirSync(`/tmp/${folders}s/`, { recursive: true,mode:777 });
+          mkdirSync(`./tmp/${folders}/`);
           itemsR.forEach((element) => {
             const name = element.Key;
             console.log('Descargando... ', name);
@@ -167,11 +167,11 @@ export class dbHelper {
               .createReadStream()
               .pipe(
                 createWriteStream(
-                  path.join(`/tmp/${folders}s/`, name.split('/')[2]),{flags:"w",mode:0}
+                  path.join(`./tmp/${folders}/`, name.split('/')[2])
                 ),
               )
               .on('close', () => {
-                resolve(path.join(`/tmp/${folders}/`, name.split('/')[2]));
+                resolve(path.join(`./tmp/${folders}/`, name.split('/')[2]));
               });
           });
           //console.log(items)
