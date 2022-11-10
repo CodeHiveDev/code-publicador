@@ -25,16 +25,16 @@ export class RasterService {
 
     const items = await this.dbHelperQ.s3downloadRaster(type, folder);
 
-    items.forEach((element) => {
+    // items.forEach((element) => {
      
-      const name = element.Key.split('/')[2];
-      console.log(name);
+    //   const name = element.Key.split('/')[2];
+    //   console.log(name);
 
-    });
+    // });
 
-    const fileZip = await this.dbHelperQ.createZipArchive();
+    //const fileZip = await this.dbHelperQ.createZipArchive();
 
-    this.GeoService.uploadRaster(fileZip, type);
+    //this.GeoService.uploadRaster(fileZip, type);
 
     // exec(
     //   'aws s3 cp s3://ho-backend-content-dev/' +

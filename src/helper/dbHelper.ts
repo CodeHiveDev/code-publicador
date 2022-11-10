@@ -17,7 +17,6 @@ export class dbHelper {
   constructor(
     @Inject(forwardRef(() => ConfigService))
     private configService: ConfigService,
-    @InjectDataSource() private dataSource: DataSource,
   ) {
     this.s3 = new AWS.S3();
   }
@@ -155,7 +154,7 @@ export class dbHelper {
         .promise()
         .then((obj) => {
           itemsR = obj['Contents'];
-          mkdirSync(`/tmp/${folders}/`, { recursive: true });
+          mkdirSync(`/tmp/${folders}s/`, { recursive: true,mode:777 });
           itemsR.forEach((element) => {
             const name = element.Key;
             console.log('Descargando... ', name);
@@ -168,7 +167,7 @@ export class dbHelper {
               .createReadStream()
               .pipe(
                 createWriteStream(
-                  path.join(`/tmp/${folders}/`, name.split('/')[2]),
+                  path.join(`/tmp/${folders}s/`, name.split('/')[2]),{flags:"w",mode:0}
                 ),
               )
               .on('close', () => {
@@ -227,8 +226,8 @@ export class dbHelper {
   public async createZipArchive() {
     try {
       const zip =  new AdmZip();
-      const outputFile = "/tmp/publicador/rasters/rasters.zip";
-      zip.addLocalFolder("/tmp/publicador/rasters");
+      const outputFile = "./tmp/publicador/rasters/rasters.zip";
+      zip.addLocalFolder("./tmp/publicador/rasters");
       zip.writeZip(outputFile);
       console.log(`Created ${outputFile} successfully`);
       return outputFile;
