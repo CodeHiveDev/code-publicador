@@ -11,6 +11,14 @@ $ npm run start:dev
 $ npm run start:prod
 ```
 
+## Requerimientos GEOSERVER
+```
+Extensiones de Geoserver. 
+
+gdal-3.2.0
+gs-gdal-2.21-SNAPSHOT
+```
+
 ## Config json Raster (raster.json)
 ```
 {
