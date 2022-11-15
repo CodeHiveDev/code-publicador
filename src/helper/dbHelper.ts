@@ -17,6 +17,7 @@ export class dbHelper {
   constructor(
     @Inject(forwardRef(() => ConfigService))
     private configService: ConfigService,
+    @InjectDataSource() private dataSource: DataSource,
   ) {
     this.s3 = new AWS.S3();
   }
@@ -154,7 +155,7 @@ export class dbHelper {
         .promise()
         .then((obj) => {
           itemsR = obj['Contents'];
-          mkdirSync(`/tmp/${folders}s/`, { recursive: true,mode:777 });
+          mkdirSync(`./tmp/${folders}/`, { recursive: true, mode:777 });
           itemsR.forEach((element) => {
             const name = element.Key;
             console.log('Descargando... ', name);
@@ -162,17 +163,19 @@ export class dbHelper {
               Bucket: `${BUCKETNAME}`,
               Key: name,
             };
-
-            S3.getObject(params)
+            if(name.split('/')[2]!=""){
+              S3.getObject(params)
               .createReadStream()
               .pipe(
                 createWriteStream(
-                  path.join(`/tmp/${folders}s/`, name.split('/')[2]),{flags:"w",mode:0}
+                  path.join(`./tmp/${folders}/`, `d${name.split('/')[2]}`),{flags:"w",mode:0}
                 ),
               )
               .on('close', () => {
-                resolve(path.join(`/tmp/${folders}/`, name.split('/')[2]));
+                resolve(true);
               });
+            }
+
           });
           //console.log(items)
           return itemsR;

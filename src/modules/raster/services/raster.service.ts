@@ -32,19 +32,14 @@ export class RasterService {
 
     // });
 
-    //const fileZip = await this.dbHelperQ.createZipArchive();
+    const fileZip = await this.dbHelperQ.createZipArchive();
 
-    //this.GeoService.uploadRaster(fileZip, type);
+    await this.GeoService.uploadRaster(fileZip, type);
 
-    // exec(
-    //   'aws s3 cp s3://ho-backend-content-dev/' +
-    //     pathraster +
-    //     ' /mnt/d/tmp/publicador',
-    // );
-    // exec(
-    //   'raster2pgsql -s 4326 -a -I -C -M /mnt/d/tmp/' +
-    //     pathraster +
-    //     ' -F -t 256x256 public.rasters | PGPASSWORD=postgres psql -h 172.17.26.18 -d georaster -p 5436 -U postgres ',
-    // );
+    await this.GeoService.updateRaster("file:///var/local/geoserver/data/invap/canteras")
+
+    await this.GeoService.setConfigRaster()
+
+
   }
 }

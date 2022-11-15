@@ -166,12 +166,73 @@ export class GeoserverService {
           { headers: { 'Content-Type': `application/zip` } },
         ),
       );
+      console.log("UploadRaster => OK",data)
       return data;
     } catch (e) {
-      console.log('Error PublishLayer: ', e);
+      console.log('Error uploadRaster: ', e);
+
+      return true;
+    }
+  }
+
+  async updateRaster(file: any) {
+    try {
+      const pathfile = `${this.WORKSPACE}/${this.STORE}/${file}`;
+
+      const rasterPath = file;
+
+      for (let i = 0; i < 4; i++) {
+        console.log(`Waiting ${i} seconds...`);
+        await sleep(i * 10000);
+    }
+
+      const { data, status } = await firstValueFrom(
+        this.httpService.put(
+          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${this.STORE}/external.imagemosaic`,
+          rasterPath,
+          { headers: { 'Content-Type': `text/plain` } },
+        ),
+      );
+      return data;
+    } catch (e) {
+      console.log('Error uodateRaster: ', e);
+
+      return true;
+    }
+  }
+
+  async setConfigRaster() {
+    try {
+
+      const coverage = '<coverage>\
+      <enabled>true</enabled>\
+      <metadata><entry key="time">\
+      <dimensionInfo>\
+      <enabled>true</enabled>\
+      <presentation>CONTINUOUS_INTERVAL</presentation>\
+      <units>ISO8601</units><defaultValue/>\
+      </dimensionInfo>\
+      </entry></metadata>\
+      </coverage>';
+
+      const { data, status } = await firstValueFrom(
+        this.httpService.put(
+          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${this.STORE}/external.imagemosaic`,
+          coverage,
+          { headers: { 'Content-Type': `application/xml` } },
+        ),
+      );
+      return data;
+    } catch (e) {
+      console.log('Error setConfigRaster: ', e);
 
       return true;
     }
   }
 
 }
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
