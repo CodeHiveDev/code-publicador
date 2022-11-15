@@ -5,7 +5,7 @@ import { DataSource } from 'typeorm';
 import { exec } from 'shelljs';
 import * as AWS from 'aws-sdk';
 import * as path from 'path';
-
+import * as AdmZip from 'adm-zip';
 import { mkdirSync, createWriteStream } from 'fs';
 interface DatabaseConfig {
   host: string;
@@ -142,6 +142,47 @@ export class dbHelper {
         });
     });
   }
+  public async s3downloadRaster(type: string, folders: string) {
+    const BUCKETNAME = this.configService.get<string>('BUCKETNAME');
+    const S3 = this.s3;
+    let itemsR;
+    await new Promise((resolve, reject) => {
+      const options = {
+        Bucket: `${BUCKETNAME}`,
+        Prefix: `${folders}`,
+      };
+      S3.listObjectsV2(options)
+        .promise()
+        .then((obj) => {
+          itemsR = obj['Contents'];
+          mkdirSync(`./tmp/${folders}/`, { recursive: true, mode:777 });
+          itemsR.forEach((element) => {
+            const name = element.Key;
+            console.log('Descargando... ', name);
+            const params = {
+              Bucket: `${BUCKETNAME}`,
+              Key: name,
+            };
+            if(name.split('/')[2]!=""){
+              S3.getObject(params)
+              .createReadStream()
+              .pipe(
+                createWriteStream(
+                  path.join(`./tmp/${folders}/`, `d${name.split('/')[2]}`),{flags:"w",mode:0}
+                ),
+              )
+              .on('close', () => {
+                resolve(true);
+              });
+            }
+
+          });
+          //console.log(items)
+          return itemsR;
+        });
+    });
+    return itemsR;
+  }
   public async copyS3Tmp(nameshapefile: string, folders: string) {
     console.log('copyS3TmpcopyS3Tmp');
     const BUCKETNAME = this.configService.get<string>('BUCKETNAME');
@@ -183,5 +224,18 @@ export class dbHelper {
         });
       }
     });
+  }
+
+  public async createZipArchive() {
+    try {
+      const zip =  new AdmZip();
+      const outputFile = "./tmp/publicador/rasters/rasters.zip";
+      zip.addLocalFolder("./tmp/publicador/rasters");
+      zip.writeZip(outputFile);
+      console.log(`Created ${outputFile} successfully`);
+      return outputFile;
+    } catch (e) {
+      console.log(`Something went wrong. ${e}`);
+    }
   }
 }

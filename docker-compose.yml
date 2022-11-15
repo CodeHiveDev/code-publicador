@@ -1,0 +1,114 @@
+version: '3.7'
+services:
+  api:
+    mem_limit: 3000m
+    mem_reservation: 1000M
+    cpus: 2
+    build:
+      dockerfile: Dockerfile-dev
+      context: .
+      # Only will build development stage from our dockerfile
+      target: development
+    volumes:
+      - .:/usr/src/app
+    env_file:
+    - .env
+    # Run a command against the development stage of the image
+    command:  >
+      sh -c "npm i &&
+             npm run start:dev"
+    networks:
+    - default
+    ports:
+      - 3000:3000
+    depends_on:
+      geoserver:
+        condition: service_healthy
+  
+  #------------------------------#
+  # PostgreSQL RDMS With PostGIS #
+  #------------------------------#
+  postgresql:
+    image: postgis/postgis:14-3.2-alpine
+    hostname: postgresql
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=geoserver
+      - POSTGRES_PASSWORD=PsKZwixgak
+      - POSTGRES_DB=geoserver
+      - POSTGRES_PORT=5432
+    volumes:
+      - postgresql-data:/var/lib/postgresql/data/
+    healthcheck:
+      test: pg_isready --quiet --username=$$POSTGRES_USER --dbname=$$POSTGRES_DB
+ 
+  #-------------------#
+  # pgAdmin 4 WEB GUI #
+  #-------------------#
+  pgadmin:
+    image: dpage/pgadmin4:6.13
+    hostname: pgadmin
+    ports:
+      - "8543:8543"
+    environment:
+      - PGADMIN_LISTEN_ADDRESS=0.0.0.0
+      - PGADMIN_LISTEN_PORT=8543
+      - PGADMIN_DEFAULT_EMAIL=german@invap.com.ar
+      - PGADMIN_DEFAULT_PASSWORD=PsKZwixgak
+      - PGADMIN_CONFIG_LOGIN_BANNER="Base de datos de prueba"
+      - PGADMIN_CONFIG_CONSOLE_LOG_LEVEL=10
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    healthcheck:
+      test: wget --no-cache --spider http://localhost:$${PGADMIN_LISTEN_PORT}/browser/
+    depends_on:
+      postgresql:
+        condition: service_healthy
+
+  #-----------------------#
+  # GeoServer Maps Server #
+  #-----------------------#
+  geoserver:
+    image: oscarfonts/geoserver:2.21.1
+    hostname: geoserver
+    ports:
+      - "8080:8080"
+    environment:
+      - GEOSERVER_EXT_DIR=/mnt
+    volumes:
+      - ./test-local/start.sh:/usr/local/bin/start.sh:ro
+      - ./canterastestLocal:/var/local/geoserver/data/invap/canterastestLocal:rw
+      - ./test-local/extensions:/mnt:ro
+      - geoserver-data:/var/local/geoserver
+      #- extensions-data:/var/local/geoserver-exts
+    # healthcheck:
+    #   test: wget --no-cache --spider http://localhost:8080/geoserver/ows
+    depends_on:
+      postgresql:
+        condition: service_healthy
+
+  #-------------------------------------#
+  # Portainer Docker Cluster Management #
+  #-------------------------------------#
+  portainer:
+    image: portainer/portainer-ce:2.15.1-alpine
+    hostname: portainer
+    ports:
+      - 8900:9000
+    environment:
+      - PORTAINER_PORT=9000
+      #- PORTAINER_ADMIN_NAME=${DEFAULT_USER}
+      #- PORTAINER_ADMIN_PASS=${DEFAULT_PASSWORD}
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    healthcheck:
+      test: wget --no-cache --spider http://localhost:$${PORTAINER_PORT}/api/status
+
+volumes:
+  postgresql-data:
+  pgadmin-data:
+  geoserver-data:
