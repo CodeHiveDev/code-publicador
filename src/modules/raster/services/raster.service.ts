@@ -38,7 +38,7 @@ export class RasterService {
 
     await this.GeoService.updateRaster("file:///var/local/geoserver/data/invap/canteras")
 
-    await this.GeoService.setConfigRaster()
+    //await this.GeoService.setConfigRaster()
 
 
   }

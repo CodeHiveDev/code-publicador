@@ -163,7 +163,7 @@ export class GeoserverService {
         this.httpService.post(
           `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${this.STORE}/file.imagemosaic?configure=false`,
           fileZip,
-          { headers: { 'Content-Type': `application/zip` } },
+          { headers: { 'Content-Type': `application/zip` }, maxContentLength: Infinity, maxBodyLength: Infinity, },
         ),
       );
       console.log("UploadRaster => OK",data)
