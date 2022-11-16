@@ -66,7 +66,7 @@ export class MessageService {
         sms.filename,
         'Geometry',
       );
-    if (sms.type === 'tiff')
+    if (sms.type === 'tif')
       this.rasterService.rasterHandler(
         Objectfile,
         pathandfile,
