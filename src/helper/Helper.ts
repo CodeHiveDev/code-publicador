@@ -168,7 +168,7 @@ export class Helper {
               .createReadStream()
               .pipe(
                 createWriteStream(
-                  path.join(`./tmp/${folders}/`, `d${name.split('/')[2]}`),{flags:"w",mode:0}
+                  path.join(`./tmp/${folders}/`, `e${name.split('/')[2]}`)
                 ),
               )
               .on('close', () => {
@@ -178,7 +178,7 @@ export class Helper {
 
           });
        
-          return itemsR;
+          //return itemsR;
         });
     });
     return itemsR;
@@ -228,6 +228,10 @@ export class Helper {
 
   public async createZipArchive() {
     try {
+      for (let i = 0; i < 2; i++) {
+        console.log(`Waiting ${i} seconds... / CreateZipArchive`);
+        await sleep(i * 10000);
+    }
       const zip =  new AdmZip();
       const outputFile = "./tmp/publicador/rasters/rasters.zip";
       zip.addLocalFolder("./tmp/publicador/rasters");
@@ -238,4 +242,8 @@ export class Helper {
       console.log(`Something went wrong. ${e}`);
     }
   }
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }

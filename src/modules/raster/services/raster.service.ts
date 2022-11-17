@@ -4,7 +4,7 @@ import axios from 'axios';
 import { Helper } from 'src/helper/Helper';
 import { GeoserverService } from '@services/geoserver.service';
 import { ConfigService } from '@nestjs/config';
-
+import * as fs from 'fs';
 @Injectable()
 export class RasterService {
   private G_HOST: string;
@@ -27,7 +27,8 @@ export class RasterService {
   public async rasterHandler(fileraster: any, pathraster, folder, nameraster, type) {
     //console.log("the raster", fileraster)
     console.log('the raster', folder);
-
+    await fs.rmSync("./tmp", { recursive: true, force: true });
+    
     const items = await this.HelperQ.s3downloadRaster(type, folder);
 
     // items.forEach((element) => {
@@ -42,6 +43,7 @@ export class RasterService {
     await this.GeoService.uploadRaster(fileZip, type);
 
     await this.GeoService.updateRaster(`file:///var/geoserver/datadir/data/${this.WORKSPACE}/${this.STORE}`)
+    //await this.GeoService.updateRaster(`file:///var/local/geoserver/data/${this.WORKSPACE}/${this.STORE}`)
 
     //await this.GeoService.setConfigRaster()
 
