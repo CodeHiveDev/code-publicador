@@ -11,8 +11,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TypeOrmConfigService } from './shared/typeorm/typeorm.service';
 import { ConfigModule } from '@nestjs/config';
 import { getEnvPath } from './helper/env.helper';
-import { dbHelperModule } from './helper/dbHelper.module';
-import { dbHelper } from './helper/dbHelper';
+import { HelperModule } from './helper/Helper.module';
+import { Helper } from './helper/Helper';
 import { AwsSdkModule } from 'nest-aws-sdk';
 import * as AWS from 'aws-sdk';
 import { HttpModule } from '@nestjs/axios';
@@ -29,7 +29,7 @@ const envFilePath: string = getEnvPath(`${__dirname}/config/envs`);
     HttpModule.registerAsync({
       useClass: HttpConfigService,
     }),
-    dbHelperModule,
+    HelperModule,
     RasterModule,
     ShaperModule,
     MessageModule,
