@@ -1,7 +1,7 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { exec } from 'shelljs';
 import axios from 'axios';
-import { dbHelper } from 'src/helper/dbHelper';
+import { Helper } from 'src/helper/Helper';
 import { GeoserverService } from '@services/geoserver.service';
 import { ConfigService } from '@nestjs/config';
 
@@ -12,7 +12,7 @@ export class RasterService {
     @Inject(forwardRef(() => ConfigService))
     private configService: ConfigService,
     private GeoService: GeoserverService,
-    private dbHelperQ: dbHelper,
+    private HelperQ: Helper,
   ) {
     this.G_HOST = this.configService.get<string>('SERVER_HOST');
 
@@ -23,7 +23,7 @@ export class RasterService {
     //console.log("the raster", fileraster)
     console.log('the raster', folder);
 
-    const items = await this.dbHelperQ.s3downloadRaster(type, folder);
+    const items = await this.HelperQ.s3downloadRaster(type, folder);
 
     // items.forEach((element) => {
      
@@ -32,7 +32,7 @@ export class RasterService {
 
     // });
 
-    const fileZip = await this.dbHelperQ.createZipArchive();
+    const fileZip = await this.HelperQ.createZipArchive();
 
     await this.GeoService.uploadRaster(fileZip, type);
 

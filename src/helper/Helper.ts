@@ -12,7 +12,7 @@ interface DatabaseConfig {
   port: number;
 }
 @Injectable()
-export class dbHelper {
+export class Helper {
   private s3: any;
   constructor(
     @Inject(forwardRef(() => ConfigService))
@@ -138,7 +138,7 @@ export class dbHelper {
                 resolve(path.join(`/tmp/${folders}/`, name.split('/')[2]));
               });
           });
-          //console.log(items)
+       
         });
     });
   }
@@ -177,7 +177,7 @@ export class dbHelper {
             }
 
           });
-          //console.log(items)
+       
           return itemsR;
         });
     });

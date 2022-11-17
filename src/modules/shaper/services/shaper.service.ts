@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import { ConfigService } from '@nestjs/config';
 import path = require('path');
 import os = require('os');
-import { dbHelper } from '../../../helper/dbHelper';
+import { Helper } from '../../../helper/Helper';
 import { GeoserverService } from '@services/geoserver.service';
 import { render, renderFile } from 'template-file';
 @Injectable()
@@ -25,7 +25,7 @@ export class ShaperService {
     @Inject(forwardRef(() => ConfigService))
     private configService: ConfigService,
     private GeoService: GeoserverService,
-    private dbHelperQ: dbHelper,
+    private HelperQ: Helper,
   ) {
     this.G_HOST = this.configService.get<string>('SERVER_HOST');
 
@@ -74,16 +74,16 @@ export class ShaperService {
   ) {
     // Copy S3 file to a temp storage
     //await this.dbHelperQ.copyS3execTmp(nameshapefile, folders3);
-    await this.dbHelperQ.s3download(nameshapefile, folders3);
+    await this.HelperQ.s3download(nameshapefile, folders3);
     // Convert shp to postgis
     // Create table
-    await this.dbHelperQ.createTable(nameshapefile);
+    await this.HelperQ.createTable(nameshapefile);
 
     await this.GeoService.getLayerName(`${nameshapefile}`);
 
-    await this.dbHelperQ.shapefilesToPosg(pathandfile, nameshapefile);
+    await this.HelperQ.shapefilesToPosg(pathandfile, nameshapefile);
 
-    await this.dbHelperQ.shapefilesUpdate(nameshapefile);
+    await this.HelperQ.shapefilesUpdate(nameshapefile);
 
     await this.GeoService.publishLayer(nameshapefile, type);
 

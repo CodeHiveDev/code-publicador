@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ShaperService } from './services/shaper.service';
-import { dbHelper } from '../../helper/dbHelper';
+import { Helper } from '../../helper/Helper';
 import { GeoserverService } from '@services/geoserver.service';
 import { HttpConfigService } from '@services/httpService.config';
 import { HttpModule } from '@nestjs/axios';
@@ -11,7 +11,7 @@ import { HttpModule } from '@nestjs/axios';
       useClass: HttpConfigService,
     }),
   ],
-  providers: [ShaperService, dbHelper, GeoserverService],
+  providers: [ShaperService, Helper, GeoserverService],
   exports: [ShaperService],
 })
 export class ShaperModule {}
