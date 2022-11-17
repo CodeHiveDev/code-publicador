@@ -8,13 +8,18 @@ import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class RasterService {
   private G_HOST: string;
+  private WORKSPACE:string;
+  private STORE:string;
   constructor(
     @Inject(forwardRef(() => ConfigService))
     private configService: ConfigService,
     private GeoService: GeoserverService,
     private HelperQ: Helper,
+    
   ) {
     this.G_HOST = this.configService.get<string>('SERVER_HOST');
+    this.WORKSPACE = this.configService.get<string>('WORKSPACE');
+    this.STORE = this.configService.get<string>('STORE');
 
   }
 
@@ -36,7 +41,7 @@ export class RasterService {
 
     await this.GeoService.uploadRaster(fileZip, type);
 
-    await this.GeoService.updateRaster("file:///var/local/geoserver/data/invap/canteras")
+    await this.GeoService.updateRaster(`file:///var/geoserver/datadir/data/${this.WORKSPACE}/${this.STORE}`)
 
     //await this.GeoService.setConfigRaster()
 
