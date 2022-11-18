@@ -193,6 +193,8 @@ export class GeoserverService {
           { headers: { 'Content-Type': `text/plain` } },
         ),
       );
+      console.log('Update Raster => OK');
+
       return data;
     } catch (e) {
       console.log('Error uodateRaster: ', e);
