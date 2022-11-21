@@ -1,10 +1,6 @@
 {
   "action": { "DataType": "String", "StringValue": "semaforo" },
   "folder": { "DataType": "String", "StringValue": "publicador/rasters" },
-  "multiplesfiles": { "DataType": "String", "StringValue": "false" },
-  "filename": {
-    "DataType": "String",
-    "StringValue": "semaforo_canteras_faja3"
-  },
+  "store": { "DataType": "String", "StringValue": "canteras" },
   "type": { "DataType": "String", "StringValue": "tif" }
 }

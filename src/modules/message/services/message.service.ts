@@ -71,6 +71,7 @@ export class MessageService {
         Objectfile,
         pathandfile,
         sms.folder,
+        sms.store,
         sms.filename,
         'GeoTIFF',
       );

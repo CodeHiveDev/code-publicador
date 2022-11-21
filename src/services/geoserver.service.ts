@@ -153,15 +153,15 @@ export class GeoserverService {
     }
   }
 
-  async uploadRaster(file: any, type: any) {
+  async uploadRaster(file: any, type: any, store:any) {
     try {
-      const pathfile = `${this.WORKSPACE}/${this.STORE}/${file}`;
+      const pathfile = `${this.WORKSPACE}/${store}/${file}`;
 
       const fileZip = fs.createReadStream(`${file}`);
 
       const { data, status } = await firstValueFrom(
         this.httpService.post(
-          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${this.STORE}/file.imagemosaic?configure=false`,
+          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${store}/file.imagemosaic?configure=false`,
           fileZip,
           { headers: { 'Content-Type': `application/zip` }, maxContentLength: Infinity, maxBodyLength: Infinity, },
         ),
@@ -175,9 +175,9 @@ export class GeoserverService {
     }
   }
 
-  async updateRaster(file: any) {
+  async updateRaster(file: any, store:any) {
     try {
-      const pathfile = `${this.WORKSPACE}/${this.STORE}/${file}`;
+      const pathfile = `${this.WORKSPACE}/${store}/${file}`;
 
       const rasterPath = file;
 
@@ -188,7 +188,7 @@ export class GeoserverService {
 
       const { data, status } = await firstValueFrom(
         this.httpService.put(
-          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${this.STORE}/external.imagemosaic`,
+          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${store}/external.imagemosaic`,
           rasterPath,
           { headers: { 'Content-Type': `text/plain` } },
         ),
@@ -203,7 +203,7 @@ export class GeoserverService {
     }
   }
 
-  async setConfigRaster() {
+  async setConfigRaster(store: any) {
     try {
 
       const coverage = '<coverage>\
@@ -219,7 +219,7 @@ export class GeoserverService {
 
       const { data, status } = await firstValueFrom(
         this.httpService.put(
-          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${this.STORE}/external.imagemosaic`,
+          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${store}/external.imagemosaic`,
           coverage,
           { headers: { 'Content-Type': `application/xml` } },
         ),

@@ -19,14 +19,13 @@ export class RasterService {
   ) {
     this.G_HOST = this.configService.get<string>('SERVER_HOST');
     this.WORKSPACE = this.configService.get<string>('WORKSPACE');
-    this.STORE = this.configService.get<string>('STORE');
 
   }
 
 
-  public async rasterHandler(fileraster: any, pathraster, folder, nameraster, type) {
-    //console.log("the raster", fileraster)
-    console.log('the raster', folder);
+  public async rasterHandler(fileraster: any, pathraster, folder,store, nameraster, type) {
+    
+
     await fs.rmSync("./tmp", { recursive: true, force: true });
     
     const items = await this.HelperQ.s3downloadRaster(type, folder);
@@ -40,12 +39,12 @@ export class RasterService {
 
     const fileZip = await this.HelperQ.createZipArchive();
 
-    await this.GeoService.uploadRaster(fileZip, type);
+    await this.GeoService.uploadRaster(fileZip, type, store);
 
-    await this.GeoService.updateRaster(`file:///var/geoserver/datadir/data/${this.WORKSPACE}/${this.STORE}`)
+    await this.GeoService.updateRaster(`file:///var/geoserver/datadir/data/${this.WORKSPACE}/${store}`,store)
     //await this.GeoService.updateRaster(`file:///var/local/geoserver/data/${this.WORKSPACE}/${this.STORE}`)
 
-    //await this.GeoService.setConfigRaster()
+    await this.GeoService.setConfigRaster(store)
 
 
   }

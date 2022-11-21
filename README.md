@@ -24,6 +24,7 @@ gs-gdal-2.21-SNAPSHOT
 {
   "action": { "DataType": "String", "StringValue": "semaforo" },
   "folder": { "DataType": "String", "StringValue": "publicador/rasters" },
+  "store": { "DataType": "String", "StringValue": "canteras" },
   "type": { "DataType": "String", "StringValue": "tif" }
 }
 ```
