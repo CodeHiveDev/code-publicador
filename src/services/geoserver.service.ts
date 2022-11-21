@@ -111,7 +111,7 @@ export class GeoserverService {
 
       return data;
     } catch (e) {
-      console.log('Error uploadStyle: ', e);
+      console.log('Error uploadStyle: ', e.message);
       return true;
     }
   }
@@ -169,7 +169,7 @@ export class GeoserverService {
       console.log("UploadRaster => OK",data)
       return data;
     } catch (e) {
-      console.log('Error uploadRaster: ', e);
+      console.log('Error uploadRaster: ', e.message);
 
       return true;
     }
@@ -197,7 +197,7 @@ export class GeoserverService {
 
       return data;
     } catch (e) {
-      console.log('Error uodateRaster: ', e);
+      console.log('Error uodateRaster: ', e.message);
 
       return true;
     }
@@ -219,14 +219,15 @@ export class GeoserverService {
 
       const { data, status } = await firstValueFrom(
         this.httpService.put(
-          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${store}/external.imagemosaic`,
+          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${store}/coverages/${store}`,
           coverage,
           { headers: { 'Content-Type': `application/xml` } },
         ),
       );
       return data;
     } catch (e) {
-      console.log('Error setConfigRaster: ', e);
+
+      console.log('Error setConfigRaster: ', e.message);
 
       return true;
     }
