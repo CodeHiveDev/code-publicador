@@ -30,7 +30,7 @@ export class MessageService {
     this.queueName = QUEUE;
   }
 
-  @SetMetadata(SQS_CONSUMER_METHOD, { name: 'invap-ho-event-queue-test' })
+  @SetMetadata(SQS_CONSUMER_METHOD, { name: 'events-invap-ho-dev' })
   //receiveMessage visibilitytimeoout waittime atributes all buscar sequence number deletemessage reciep handle
   public async MessageHandler(message: AWS.SQS.Message) {
     let sms: any = {};
