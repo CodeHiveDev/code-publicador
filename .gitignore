@@ -43,3 +43,4 @@ lerna-debug.log*
 build.sh
 /upload
 /tmp
+deploy*.sh
