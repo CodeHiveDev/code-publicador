@@ -1,24 +1,15 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { InjectDataSource } from '@nestjs/typeorm';
-import { ConfigService } from '@nestjs/config';
-import { DataSource } from 'typeorm';
+import { Injectable } from '@nestjs/common';
 import { exec } from 'shelljs';
 import * as AWS from 'aws-sdk';
 import * as path from 'path';
 import * as AdmZip from 'adm-zip';
 import { mkdirSync, createWriteStream } from 'fs';
-interface DatabaseConfig {
-  host: string;
-  port: number;
-}
+import { AppConfigService } from 'src/config/config.service';
+
 @Injectable()
-export class Helper {
-  private s3: any;
-  constructor(
-    @Inject(forwardRef(() => ConfigService))
-    private configService: ConfigService,
-    @InjectDataSource() private dataSource: DataSource,
-  ) {
+export class HelperService {
+  private s3: AWS.S3;
+  constructor(private appConfigService: AppConfigService) {
     this.s3 = new AWS.S3();
   }
 
@@ -26,29 +17,29 @@ export class Helper {
   public async createTable(nameshapefile: string) {
     exec(
       'PGPASSWORD=' +
-        process.env.PGPASSWORD +
+        this.appConfigService.pgPassword +
         ' psql -h ' +
-        process.env.DATABASE_HOST +
+        this.appConfigService.postgresHost +
         ' -d ' +
-        process.env.POSTGRES_DB +
+        this.appConfigService.postgresDb +
         ' -p ' +
-        process.env.POSTGRES_PORT +
+        this.appConfigService.postgresPort +
         ' -U ' +
-        process.env.POSTGRES_USER +
+        this.appConfigService.postgresUser +
         ' -c "CREATE TABLE IF NOT EXISTS public.shapefiles ( idshapefile serial NOT NULL, id_0 integer NOT NULL, layername varchar(100), expediente text, categoria text, fecha date, geom geometry, PRIMARY KEY (idshapefile))" ',
     ); // -f "createshapefile" sql query
     // Altern Table add column
     exec(
       'PGPASSWORD=' +
-        process.env.PGPASSWORD +
+        this.appConfigService.pgPassword +
         ' psql -h ' +
-        process.env.DATABASE_HOST +
+        this.appConfigService.postgresHost +
         ' -d ' +
-        process.env.POSTGRES_DB +
+        this.appConfigService.postgresDb +
         ' -p ' +
-        process.env.POSTGRES_PORT +
+        this.appConfigService.postgresPort +
         ' -U ' +
-        process.env.POSTGRES_USER +
+        this.appConfigService.postgresUser +
         ' -c "ALTER TABLE public.shapefiles ADD COLUMN IF NOT EXISTS layername varchar(100) DEFAULT ' +
         nameshapefile +
         ' " ',
@@ -60,15 +51,15 @@ export class Helper {
     // Insert field layername if is null
     exec(
       'PGPASSWORD=' +
-        process.env.PGPASSWORD +
+        this.appConfigService.pgPassword +
         ' psql -h ' +
-        process.env.DATABASE_HOST +
+        this.appConfigService.postgresHost +
         ' -d ' +
-        process.env.POSTGRES_DB +
+        this.appConfigService.postgresDb +
         ' -p ' +
-        process.env.POSTGRES_PORT +
+        this.appConfigService.postgresPort +
         ' -U ' +
-        process.env.POSTGRES_USER +
+        this.appConfigService.postgresUser +
         ' -c "UPDATE public.shapefiles SET layername = ' +
         "'" +
         nameshapefile +
@@ -85,27 +76,27 @@ export class Helper {
         ' public.shapefiles | PGAPPNAME="' +
         nameshapefile +
         '" PGPASSWORD=' +
-        process.env.PGPASSWORD +
+        this.appConfigService.pgPassword +
         ' psql -h ' +
-        process.env.DATABASE_HOST +
+        this.appConfigService.postgresHost +
         ' -d ' +
-        process.env.POSTGRES_DB +
+        this.appConfigService.postgresDb +
         ' -p ' +
-        process.env.POSTGRES_PORT +
+        this.appConfigService.postgresPort +
         ' -U ' +
-        process.env.POSTGRES_USER +
+        this.appConfigService.postgresUser +
         ' ',
     );
   }
   public async copyS3execTmp(nameshapefile: string, folders: string) {
-    const BUCKETNAME = this.configService.get<string>('BUCKETNAME');
+    const BUCKETNAME = this.appConfigService.bucketName;
     exec(
       `aws s3 cp s3://${BUCKETNAME}/${folders} /tmp/${folders} --recursive --exclude "*" --include "${nameshapefile}*" --profile invap`,
     );
   }
 
   public async s3download(nameshapefile: string, folders: string) {
-    const BUCKETNAME = this.configService.get<string>('BUCKETNAME');
+    const BUCKETNAME = this.appConfigService.bucketName;
     const S3 = this.s3;
     return new Promise((resolve, reject) => {
       const options = {
@@ -138,12 +129,11 @@ export class Helper {
                 resolve(path.join(`/tmp/${folders}/`, name.split('/')[2]));
               });
           });
-       
         });
     });
   }
   public async s3downloadRaster(type: string, folders: string) {
-    const BUCKETNAME = this.configService.get<string>('BUCKETNAME');
+    const BUCKETNAME = this.appConfigService.bucketName;
     const S3 = this.s3;
     let itemsR;
     await new Promise((resolve, reject) => {
@@ -155,7 +145,7 @@ export class Helper {
         .promise()
         .then((obj) => {
           itemsR = obj['Contents'];
-          mkdirSync(`./tmp/${folders}/`, { recursive: true, mode:777 });
+          mkdirSync(`./tmp/${folders}/`, { recursive: true, mode: 777 });
           itemsR.forEach((element) => {
             const name = element.Key;
             console.log('Descargando... ', name);
@@ -163,21 +153,21 @@ export class Helper {
               Bucket: `${BUCKETNAME}`,
               Key: name,
             };
-            if(name.split('/')[2]!=""){
+            if (name.split('/')[2] != '') {
               S3.getObject(params)
-              .createReadStream()
-              .pipe(
-                createWriteStream(
-                  path.join(`./tmp/${folders}/`, `d${name.split('/')[2]}`),{flags:"w",mode:0}
-                ),
-              )
-              .on('close', () => {
-                resolve(true);
-              });
+                .createReadStream()
+                .pipe(
+                  createWriteStream(
+                    path.join(`./tmp/${folders}/`, `d${name.split('/')[2]}`),
+                    { flags: 'w', mode: 0 },
+                  ),
+                )
+                .on('close', () => {
+                  resolve(true);
+                });
             }
-
           });
-       
+
           return itemsR;
         });
     });
@@ -185,7 +175,7 @@ export class Helper {
   }
   public async copyS3Tmp(nameshapefile: string, folders: string) {
     console.log('copyS3TmpcopyS3Tmp');
-    const BUCKETNAME = this.configService.get<string>('BUCKETNAME');
+    const BUCKETNAME = this.appConfigService.bucketName;
     const S3 = this.s3;
     const options = {
       Bucket: `${BUCKETNAME}`,
@@ -228,9 +218,9 @@ export class Helper {
 
   public async createZipArchive() {
     try {
-      const zip =  new AdmZip();
-      const outputFile = "./tmp/publicador/rasters/rasters.zip";
-      zip.addLocalFolder("./tmp/publicador/rasters");
+      const zip = new AdmZip();
+      const outputFile = './tmp/publicador/rasters/rasters.zip';
+      zip.addLocalFolder('./tmp/publicador/rasters');
       zip.writeZip(outputFile);
       console.log(`Created ${outputFile} successfully`);
       return outputFile;

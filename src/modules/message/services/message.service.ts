@@ -1,10 +1,8 @@
 import { Inject, Injectable, forwardRef, SetMetadata } from '@nestjs/common';
-import { SqsMessageHandler, SqsConsumerEventHandler } from '@ssut/nestjs-sqs';
 import * as AWS from 'aws-sdk';
 import { RasterService } from '@modules/raster/services/raster.service';
 import { ShaperService } from '@modules/shaper/services/shaper.service';
-
-import { ConfigService } from '@nestjs/config';
+import { AppConfigService } from 'src/config/config.service';
 
 //const mivar2 = process.env.QUEUE
 const SQS_CONSUMER_METHOD = Symbol.for('SQS_CONSUMER_METHOD');
@@ -18,14 +16,13 @@ export class MessageService {
     private ShaperService: ShaperService,
     @Inject(forwardRef(() => RasterService))
     private rasterService: RasterService,
-    @Inject(forwardRef(() => ConfigService))
-    private configService: ConfigService,
+    private appConfigService: AppConfigService,
   ) {
-    const port = this.configService.get<number>('PORT');
+    const port = this.appConfigService.port;
     if (!port) {
       throw new Error(`Environment variables are missing`);
     }
-    const QUEUE = this.configService.get<string>('QueueService.QUEUE');
+    const QUEUE = this.appConfigService.queue;
 
     this.queueName = QUEUE;
   }
@@ -33,7 +30,7 @@ export class MessageService {
   @SetMetadata(SQS_CONSUMER_METHOD, { name: 'invap-ho-event-queue-test' })
   //receiveMessage visibilitytimeoout waittime atributes all buscar sequence number deletemessage reciep handle
   public async MessageHandler(message: AWS.SQS.Message) {
-    let sms: any = {};
+    const sms: any = {};
     // read attributes
     message.MessageAttributes &&
       Object.keys(message.MessageAttributes).forEach((attribute) => {

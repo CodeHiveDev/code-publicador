@@ -1,50 +1,51 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { exec } from 'shelljs';
-import axios from 'axios';
-import { Helper } from 'src/helper/Helper';
+import { Injectable } from '@nestjs/common';
+import { HelperService } from 'src/helper/helper.service';
 import { GeoserverService } from '@services/geoserver.service';
-import { ConfigService } from '@nestjs/config';
+import { AppConfigService } from 'src/config/config.service';
 
 @Injectable()
 export class RasterService {
   private G_HOST: string;
-  private WORKSPACE:string;
-  private STORE:string;
+  private WORKSPACE: string;
+  private STORE: string;
   constructor(
-    @Inject(forwardRef(() => ConfigService))
-    private configService: ConfigService,
+    // TODO: eliminado forwardRef
+    private appConfigService: AppConfigService,
     private GeoService: GeoserverService,
-    private HelperQ: Helper,
-    
+    private helperService: HelperService,
   ) {
-    this.G_HOST = this.configService.get<string>('SERVER_HOST');
-    this.WORKSPACE = this.configService.get<string>('WORKSPACE');
-    this.STORE = this.configService.get<string>('STORE');
-
+    this.G_HOST = this.appConfigService.serverHost;
+    this.WORKSPACE = this.appConfigService.workspace;
+    this.STORE = this.appConfigService.store;
   }
 
-
-  public async rasterHandler(fileraster: any, pathraster, folder, nameraster, type) {
+  public async rasterHandler(
+    fileraster: any,
+    pathraster,
+    folder,
+    nameraster,
+    type,
+  ) {
     //console.log("the raster", fileraster)
     console.log('the raster', folder);
 
-    const items = await this.HelperQ.s3downloadRaster(type, folder);
+    const items = await this.helperService.s3downloadRaster(type, folder);
 
     // items.forEach((element) => {
-     
+
     //   const name = element.Key.split('/')[2];
     //   console.log(name);
 
     // });
 
-    const fileZip = await this.HelperQ.createZipArchive();
+    const fileZip = await this.helperService.createZipArchive();
 
     await this.GeoService.uploadRaster(fileZip, type);
 
-    await this.GeoService.updateRaster(`file:///var/geoserver/datadir/data/${this.WORKSPACE}/${this.STORE}`)
+    await this.GeoService.updateRaster(
+      `file:///var/geoserver/datadir/data/${this.WORKSPACE}/${this.STORE}`,
+    );
 
     //await this.GeoService.setConfigRaster()
-
-
   }
 }
