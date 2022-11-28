@@ -1,12 +1,12 @@
 import { Injectable, forwardRef, Inject, ConsoleLogger } from '@nestjs/common';
 import axios from 'axios';
 import * as fs from 'fs';
-import { ConfigService } from '@nestjs/config';
 import path = require('path');
 import os = require('os');
-import { Helper } from '../../../helper/Helper';
+import { HelperService } from '../../../helper/helper.service';
 import { GeoserverService } from '@services/geoserver.service';
 import { render, renderFile } from 'template-file';
+import { AppConfigService } from 'src/config/config.service';
 @Injectable()
 export class ShaperService {
   private P_PORT: number;
@@ -22,12 +22,12 @@ export class ShaperService {
   private TEMDIR: string;
   private TPLDIR: string;
   constructor(
-    @Inject(forwardRef(() => ConfigService))
-    private configService: ConfigService,
+    // TODO: eliminado forwardRed 2
+    private appConfigService: AppConfigService,
     private GeoService: GeoserverService,
-    private HelperQ: Helper,
+    private helperService: HelperService,
   ) {
-    this.G_HOST = this.configService.get<string>('SERVER_HOST');
+    this.G_HOST = this.appConfigService.serverHost;
 
     // get temp directory
     this.TEMDIR = os.tmpdir(); // /tmp
@@ -37,32 +37,29 @@ export class ShaperService {
       throw new Error(`GEOSERVER variables are missing`);
     }
 
-    const BUCKETNAME = this.configService.get<string>('BUCKETNAME');
+    const BUCKETNAME = this.appConfigService.bucketName;
     this.PBUCKETNAME = BUCKETNAME;
 
-    const GEOSERVER_AUTH = this.configService.get<string>('SERVER_AUTH');
-    this.G_AUTH = GEOSERVER_AUTH;
-
-    const GEOSERVER_USER = this.configService.get<string>('SERVER_USER');
+    const GEOSERVER_USER = this.appConfigService.serverUser;
     this.G_USER = GEOSERVER_USER;
 
-    const GEOSERVER_PASS = this.configService.get<string>('SERVER_PASSWORD');
+    const GEOSERVER_PASS = this.appConfigService.serverPassword;
     this.G_PASS = GEOSERVER_PASS;
 
-    const POSTGRES_HOST = this.configService.get<string>('DATABASE_HOST');
+    const POSTGRES_HOST = this.appConfigService.postgresHost;
 
     this.P_HOST = POSTGRES_HOST;
 
-    const POSTGRES_PORT = this.configService.get<number>('DATABASE_PORT');
+    const POSTGRES_PORT = this.appConfigService.postgresPort;
     this.P_PORT = POSTGRES_PORT;
 
-    const POSTGRES_USER = this.configService.get<string>('DATABASE_USER');
+    const POSTGRES_USER = this.appConfigService.postgresUser;
     this.P_USER = POSTGRES_USER;
 
-    const POSTGRES_DB = this.configService.get<string>('DATABASE_NAME');
+    const POSTGRES_DB = this.appConfigService.postgresDb;
     this.P_DB = POSTGRES_DB;
 
-    const PGPASSWORD = this.configService.get<string>('DATABASE_PASSWORD');
+    const PGPASSWORD = this.appConfigService.pgPassword;
     this.P_PASS = PGPASSWORD;
   }
   public async shapeHandler(
@@ -74,16 +71,16 @@ export class ShaperService {
   ) {
     // Copy S3 file to a temp storage
     //await this.dbHelperQ.copyS3execTmp(nameshapefile, folders3);
-    await this.HelperQ.s3download(nameshapefile, folders3);
+    await this.helperService.s3download(nameshapefile, folders3);
     // Convert shp to postgis
     // Create table
-    await this.HelperQ.createTable(nameshapefile);
+    await this.helperService.createTable(nameshapefile);
 
     await this.GeoService.getLayerName(`${nameshapefile}`);
 
-    await this.HelperQ.shapefilesToPosg(pathandfile, nameshapefile);
+    await this.helperService.shapefilesToPosg(pathandfile, nameshapefile);
 
-    await this.HelperQ.shapefilesUpdate(nameshapefile);
+    await this.helperService.shapefilesUpdate(nameshapefile);
 
     await this.GeoService.publishLayer(nameshapefile, type);
 

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { GeoserverService } from '@services/geoserver.service';
-import { Helper } from 'src/helper/Helper';
+import { HelperService } from 'src/helper/helper.service';
 import { RasterService } from './services/raster.service';
 import { HttpModule } from '@nestjs/axios';
 import { HttpConfigService } from '@services/httpService.config';
@@ -11,7 +11,7 @@ import { HttpConfigService } from '@services/httpService.config';
       useClass: HttpConfigService,
     }),
   ],
-  providers: [RasterService, Helper, GeoserverService],
+  providers: [RasterService, HelperService, GeoserverService],
   exports: [RasterService],
 })
 export class RasterModule {}

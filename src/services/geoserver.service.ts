@@ -3,29 +3,29 @@ import { HttpService } from '@nestjs/axios';
 import { AxiosResponse } from 'axios';
 import { firstValueFrom } from 'rxjs';
 import * as fs from 'fs';
-import { ConfigService } from '@nestjs/config';
 import path = require('path');
 import { renderFile } from 'template-file';
 import { response } from 'express';
 import console = require('console');
+import { AppConfigService } from 'src/config/config.service';
 
 @Injectable()
 export class GeoserverService {
   private TPLDIR: string;
-  private WORKSPACE:string;
-  private STORE:string;
+  private WORKSPACE: string;
+  private STORE: string;
   constructor(
-    @Inject(forwardRef(() => ConfigService))
-    private configService: ConfigService,
+    // TODO: forwardRef eliminado 3 @Inject(forwardRef(() => ConfigService))
+    private appConfigService: AppConfigService,
     private httpService: HttpService,
   ) {
     this.TPLDIR = path.join(__dirname, '..', 'modules', 'shaper', 'tpl');
     console.log('this.TPLDIR', this.TPLDIR);
-    console.log('SERVER_HOST', this.configService.get<string>('DATABASE_HOST'));
-    this.WORKSPACE = this.configService.get<string>('WORKSPACE');
-    this.STORE = this.configService.get<string>('STORE');
+    console.log('SERVER_HOST', this.appConfigService.postgresHost);
+    this.WORKSPACE = this.appConfigService.workspace;
+    this.STORE = this.appConfigService.store;
   }
-  host = this.configService.get<string>('SERVER_HOST');
+  host = this.appConfigService.serverHost;
 
   async getLayerName(layername: any) {
     try {
@@ -135,7 +135,6 @@ export class GeoserverService {
   }
   async publishRaster(file: any, type: any) {
     try {
-
       const datafile = `${this.WORKSPACE}/${this.STORE}/${file}`;
 
       const { data, status } = await firstValueFrom(
@@ -163,10 +162,14 @@ export class GeoserverService {
         this.httpService.post(
           `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${store}/file.imagemosaic?configure=false`,
           fileZip,
-          { headers: { 'Content-Type': `application/zip` }, maxContentLength: Infinity, maxBodyLength: Infinity, },
+          {
+            headers: { 'Content-Type': `application/zip` },
+            maxContentLength: Infinity,
+            maxBodyLength: Infinity,
+          },
         ),
       );
-      console.log("UploadRaster => OK",data)
+      console.log('UploadRaster => OK', data);
       return data;
     } catch (e) {
       console.log('Error uploadRaster: ', e.message);
@@ -184,7 +187,7 @@ export class GeoserverService {
       for (let i = 0; i < 4; i++) {
         console.log(`Waiting ${i} seconds...`);
         await sleep(i * 10000);
-    }
+      }
 
       const { data, status } = await firstValueFrom(
         this.httpService.put(
@@ -205,8 +208,8 @@ export class GeoserverService {
 
   async setConfigRaster(store: any) {
     try {
-
-      const coverage = '<coverage>\
+      const coverage =
+        '<coverage>\
       <enabled>true</enabled>\
       <metadata><entry key="time">\
       <dimensionInfo>\
@@ -232,10 +235,8 @@ export class GeoserverService {
       return true;
     }
   }
-
 }
 
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
-
