@@ -5,7 +5,6 @@ import { AppConfigService } from './config.service';
 import configuration from './configuration';
 
 const envFilePath: string = getEnvPath(`${__dirname}/envs`);
-console.log('estoy aqui', envFilePath);
 
 @Global()
 @Module({
