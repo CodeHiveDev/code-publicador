@@ -111,7 +111,7 @@ export class GeoserverService {
 
       return data;
     } catch (e) {
-      console.log('Error uploadStyle: ', e);
+      console.log('Error uploadStyle: ', e.message);
       return true;
     }
   }
@@ -152,15 +152,15 @@ export class GeoserverService {
     }
   }
 
-  async uploadRaster(file: any, type: any) {
+  async uploadRaster(file: any, type: any, store:any) {
     try {
-      const pathfile = `${this.WORKSPACE}/${this.STORE}/${file}`;
+      const pathfile = `${this.WORKSPACE}/${store}/${file}`;
 
       const fileZip = fs.createReadStream(`${file}`);
 
       const { data, status } = await firstValueFrom(
         this.httpService.post(
-          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${this.STORE}/file.imagemosaic?configure=false`,
+          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${store}/file.imagemosaic?configure=false`,
           fileZip,
           {
             headers: { 'Content-Type': `application/zip` },
@@ -172,15 +172,15 @@ export class GeoserverService {
       console.log('UploadRaster => OK', data);
       return data;
     } catch (e) {
-      console.log('Error uploadRaster: ', e);
+      console.log('Error uploadRaster: ', e.message);
 
       return true;
     }
   }
 
-  async updateRaster(file: any) {
+  async updateRaster(file: any, store:any) {
     try {
-      const pathfile = `${this.WORKSPACE}/${this.STORE}/${file}`;
+      const pathfile = `${this.WORKSPACE}/${store}/${file}`;
 
       const rasterPath = file;
 
@@ -191,20 +191,22 @@ export class GeoserverService {
 
       const { data, status } = await firstValueFrom(
         this.httpService.put(
-          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${this.STORE}/external.imagemosaic`,
+          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${store}/external.imagemosaic`,
           rasterPath,
           { headers: { 'Content-Type': `text/plain` } },
         ),
       );
+      console.log('Update Raster => OK');
+
       return data;
     } catch (e) {
-      console.log('Error uodateRaster: ', e);
+      console.log('Error uodateRaster: ', e.message);
 
       return true;
     }
   }
 
-  async setConfigRaster() {
+  async setConfigRaster(store: any) {
     try {
       const coverage =
         '<coverage>\
@@ -220,14 +222,15 @@ export class GeoserverService {
 
       const { data, status } = await firstValueFrom(
         this.httpService.put(
-          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${this.STORE}/external.imagemosaic`,
+          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${store}/coverages/${store}`,
           coverage,
           { headers: { 'Content-Type': `application/xml` } },
         ),
       );
       return data;
     } catch (e) {
-      console.log('Error setConfigRaster: ', e);
+
+      console.log('Error setConfigRaster: ', e.message);
 
       return true;
     }

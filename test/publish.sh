@@ -1,1 +1,1 @@
-aws sqs send-message --queue-url https://sqs.us-east-1.amazonaws.com/180012085451/invap-ho-event-queue-test --message-body "publicador" --message-attributes file://$1.json --profile invap --region us-east-1
+aws sqs send-message --queue-url https://sqs.us-east-1.amazonaws.com/180012085451/events-invap-ho-dev --message-body "publicador" --message-attributes file://$1.json --profile invap --region us-east-1

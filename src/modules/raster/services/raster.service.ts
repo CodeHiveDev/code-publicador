@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { HelperService } from 'src/helper/helper.service';
 import { GeoserverService } from '@services/geoserver.service';
+import * as fs from 'fs';
 import { AppConfigService } from 'src/config/config.service';
-
 @Injectable()
 export class RasterService {
   private G_HOST: string;
@@ -11,23 +11,22 @@ export class RasterService {
   constructor(
     // TODO: eliminado forwardRef
     private appConfigService: AppConfigService,
-    private GeoService: GeoserverService,
+    private geoService: GeoserverService,
     private helperService: HelperService,
   ) {
     this.G_HOST = this.appConfigService.serverHost;
     this.WORKSPACE = this.appConfigService.workspace;
-    this.STORE = this.appConfigService.store;
   }
 
   public async rasterHandler(
     fileraster: any,
     pathraster,
     folder,
+    store,
     nameraster,
     type,
   ) {
-    //console.log("the raster", fileraster)
-    console.log('the raster', folder);
+    await fs.rmSync('./tmp', { recursive: true, force: true });
 
     const items = await this.helperService.s3downloadRaster(type, folder);
 
@@ -40,12 +39,14 @@ export class RasterService {
 
     const fileZip = await this.helperService.createZipArchive();
 
-    await this.GeoService.uploadRaster(fileZip, type);
+    await this.geoService.uploadRaster(fileZip, type, store);
 
-    await this.GeoService.updateRaster(
-      `file:///var/geoserver/datadir/data/${this.WORKSPACE}/${this.STORE}`,
+    await this.geoService.updateRaster(
+      `file:///var/geoserver/datadir/data/${this.WORKSPACE}/${store}`,
+      store,
     );
+    //await this.GeoService.updateRaster(`file:///var/local/geoserver/data/${this.WORKSPACE}/${this.STORE}`)
 
-    //await this.GeoService.setConfigRaster()
+    await this.geoService.setConfigRaster(store);
   }
 }

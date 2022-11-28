@@ -37,3 +37,10 @@ lerna-debug.log*
 
 # Environment
 /envs
+.env
+
+# Utils
+build.sh
+/upload
+/tmp
+deploy*.sh

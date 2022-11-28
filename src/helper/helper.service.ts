@@ -155,20 +155,19 @@ export class HelperService {
             };
             if (name.split('/')[2] != '') {
               S3.getObject(params)
-                .createReadStream()
-                .pipe(
-                  createWriteStream(
-                    path.join(`./tmp/${folders}/`, `d${name.split('/')[2]}`),
-                    { flags: 'w', mode: 0 },
-                  ),
-                )
-                .on('close', () => {
-                  resolve(true);
-                });
+              .createReadStream()
+              .pipe(
+                createWriteStream(
+                  path.join(`./tmp/${folders}/`, `e${name.split('/')[2]}`)
+                ),
+              )
+              .on('close', () => {
+                resolve(true);
+              });
             }
           });
-
-          return itemsR;
+       
+          //return itemsR;
         });
     });
     return itemsR;
@@ -218,9 +217,19 @@ export class HelperService {
 
   public async createZipArchive() {
     try {
+<<<<<<< HEAD:src/helper/helper.service.ts
       const zip = new AdmZip();
       const outputFile = './tmp/publicador/rasters/rasters.zip';
       zip.addLocalFolder('./tmp/publicador/rasters');
+=======
+      for (let i = 0; i < 2; i++) {
+        console.log(`Waiting ${i} seconds... / CreateZipArchive`);
+        await sleep(i * 10000);
+    }
+      const zip =  new AdmZip();
+      const outputFile = "./tmp/publicador/rasters/rasters.zip";
+      zip.addLocalFolder("./tmp/publicador/rasters");
+>>>>>>> main:src/helper/Helper.ts
       zip.writeZip(outputFile);
       console.log(`Created ${outputFile} successfully`);
       return outputFile;
@@ -228,4 +237,8 @@ export class HelperService {
       console.log(`Something went wrong. ${e}`);
     }
   }
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }

@@ -27,5 +27,8 @@ RUN pip3 install awscli
 RUN apt-get update
 RUN apt-get install postgresql postgis -y
 
+# The command that starts our app
+RUN chmod +x ./start.sh
+
 EXPOSE 5000
 CMD ["./start.sh"]
