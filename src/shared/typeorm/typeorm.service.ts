@@ -16,7 +16,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       username: this.appConfigService.postgresUser,
       password: this.appConfigService.pgPassword,
       //entities: ['dist/**/*.entity.{ts,js}'],
-      //migrations: ['dist/migrations/*.{ts,js}'],
+      //migrations: ['{dist,src}/migrations/*.{ts,js}'],
       //migrationsTableName: 'typeorm_migrations',
       logger: 'file',
       synchronize: false, // never use TRUE in production!
