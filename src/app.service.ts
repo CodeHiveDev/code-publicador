@@ -16,8 +16,9 @@ export class AppService {
   async initDatastore() {
     const dataStore = {
       dataStore: {
-        name: 'prueba_jorge',
-        description: 'Prueba Jorge',
+        name: 'postgis',
+        description:
+          'Datastore basado en Postgis para las capas del Catastro Minero',
         connectionParameters: {
           entry: [
             {
