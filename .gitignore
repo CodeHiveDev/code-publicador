@@ -36,6 +36,7 @@ lerna-debug.log*
 !.vscode/extensions.json
 
 # Environment
+/src/config/envs
 /envs
 .env
 
@@ -43,3 +44,4 @@ lerna-debug.log*
 build.sh
 /upload
 /tmp
+deploy*.sh

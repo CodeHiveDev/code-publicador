@@ -1,26 +1,25 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { TypeOrmOptionsFactory, TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { AppConfigService } from 'src/config/config.service';
 
 @Injectable()
 export class TypeOrmConfigService implements TypeOrmOptionsFactory {
-  @Inject(ConfigService)
-  private readonly config: ConfigService;
+  @Inject(AppConfigService)
+  private readonly appConfigService: AppConfigService;
 
   public createTypeOrmOptions(): TypeOrmModuleOptions {
-    console.log(this.config.get<string>('DATABASE_HOST'))
     return {
       type: 'postgres',
-      host: this.config.get<string>('DATABASE_HOST'),
-      port: this.config.get<number>('DATABASE_PORT'),
-      database: this.config.get<string>('DATABASE_NAME'),
-      username: this.config.get<string>('DATABASE_USER'),
-      password: this.config.get<string>('DATABASE_PASSWORD'),
+      host: this.appConfigService.postgresHost,
+      port: this.appConfigService.postgresPort,
+      database: this.appConfigService.postgresDb,
+      username: this.appConfigService.postgresUser,
+      password: this.appConfigService.pgPassword,
       //entities: ['dist/**/*.entity.{ts,js}'],
-      //migrations: ['dist/migrations/*.{ts,js}'],
+      //migrations: ['{dist,src}/migrations/*.{ts,js}'],
       //migrationsTableName: 'typeorm_migrations',
       logger: 'file',
-      synchronize: true, // never use TRUE in production!
+      synchronize: false, // never use TRUE in production!
     };
   }
 }

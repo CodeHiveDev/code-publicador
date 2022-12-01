@@ -3,6 +3,9 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "compilerOptions": {
-    "assets": ["config/envs/*","modules/shaper/tpl/*"]
+    "assets": [
+      { "include": "config/envs/*", "outDir": "dist/src" },
+      "modules/shaper/tpl/*"
+    ]
   }
 }

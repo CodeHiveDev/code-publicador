@@ -2,18 +2,17 @@ import {
   SqsModuleOptionsFactory,
   SqsOptions,
 } from '@ssut/nestjs-sqs/dist/sqs.types';
-import { ConfigService } from '@nestjs/config';
 import { Injectable } from '@nestjs/common';
-import * as AWS from 'aws-sdk';
+import { AppConfigService } from 'src/config/config.service';
 
 @Injectable()
 export class SqsConfigService implements SqsModuleOptionsFactory {
-  constructor(private configService: ConfigService) {}
+  constructor(private appConfigService: AppConfigService) {}
 
   public createOptions(): SqsOptions {
-    const endpoint = this.configService.get<string>('QUEUE_URL');
-    const firstQueue = this.configService.get<string>('QUEUE');
-    const regionQueue = this.configService.get<string>('AWS_REGION');
+    const endpoint = this.appConfigService.queueUrl;
+    const firstQueue = this.appConfigService.queue;
+    const regionQueue = this.appConfigService.awsRegion;
 
     return {
       consumers: [

@@ -1,24 +1,21 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { HttpModuleOptions, HttpModuleOptionsFactory } from '@nestjs/axios';
-import { ConfigService } from '@nestjs/config';
+import { AppConfigService } from 'src/config/config.service';
 
 @Injectable()
 export class HttpConfigService implements HttpModuleOptionsFactory {
-  private G_HOST: string;
-  private G_AUTH: string;
-
-  constructor(
-    @Inject(forwardRef(() => ConfigService))
-    private configService: ConfigService,
-  ) {
-    this.G_HOST = this.configService.get<string>('SERVER_HOST');
-    this.G_AUTH = this.configService.get<string>('SERVER_AUTH');
-  }
+  constructor(private appConfigService: AppConfigService) {}
 
   createHttpOptions(): HttpModuleOptions {
+    const username = this.appConfigService.serverUser;
+    const password = this.appConfigService.serverPassword;
+
     return {
       headers: {
-        Authorization: `Basic ${process.env.SERVER_AUTH}`,
+        Authorization: `Basic ${Buffer.from(
+          `${username}:${password}`,
+          'utf8',
+        ).toString('base64')}`,
         'Content-Type': `application/xml`,
       },
     };
