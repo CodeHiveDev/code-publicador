@@ -22,7 +22,7 @@ if [[ -f ${ENV_FILE_DIRNAME}/${ENV_FILE_NAME} ]]; then
 else
     echo "${ENV_FILE_NAME} doesn't exist on this filesystem."
     echo "Copying env file from AWS S3 Bucket '${ENVIRONMENT_BUCKET}/${ENV_FILE_NAME}'"
-    aws s3 cp s3://"${ENVIRONMENT_BUCKET}"/"${ENV_FILE_NAME}" .env
+    aws s3 cp s3://"${ENVIRONMENT_BUCKET}"/"${ENV_FILE_NAME}" dist/src/config/envs/development.env
 fi
 
 echo "Starting server"
