@@ -53,7 +53,7 @@ export class RasterService {
 
     });
 
-    //await this.GeoService.setConfigRaster(store)
+    //await this.geoService.setConfigRaster(store)
 
 
   }

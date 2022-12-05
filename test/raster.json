@@ -1,6 +1,6 @@
 {
   "action": { "DataType": "String", "StringValue": "semaforo" },
   "folder": { "DataType": "String", "StringValue": "publicador/rasters" },
-  "store": { "DataType": "String", "StringValue": "canterasX82" },
+  "store": { "DataType": "String", "StringValue": "canterasX90" },
   "type": { "DataType": "String", "StringValue": "tif" }
 }

@@ -213,6 +213,9 @@ export class GeoserverService {
       const rasterPath = file;
       console.log("rasterPath",rasterPath)
 
+      console.log(`Waiting 10 seconds...`);
+      await sleep(1 * 10000);
+
       const { data, status } = await firstValueFrom(
         this.httpService.post(
           `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${store}/external.imagemosaic?recalculate=nativebbox,latlonbbox`,
