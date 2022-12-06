@@ -34,12 +34,20 @@ export class RasterService {
 
     await this.geoService.uploadRaster(fileZip, type, store);
 
-    await this.geoService.updateRaster(
-      `file:///var/geoserver/datadir/data/${this.WORKSPACE}/${store}`,
-      store,
-    );
+    //await this.GeoService.updateRaster(`file:///var/geoserver/datadir/data/${this.WORKSPACE}/${store}`,store)
     //await this.GeoService.updateRaster(`file:///var/local/geoserver/data/${this.WORKSPACE}/${this.STORE}`)
 
-    await this.geoService.setConfigRaster(store);
+
+    items.forEach(async (element) => {
+
+      const name = element.Key.split('/')[2];
+      console.log(name);
+      await this.geoService.updateRaster2(`file:///var/geoserver/datadir/data/${this.WORKSPACE}/${store}/e${name}`,store)
+
+    });
+
+    //await this.GeoService.setConfigRaster(store)
+
+
   }
 }

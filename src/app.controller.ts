@@ -15,4 +15,9 @@ export class AppController {
   getHello(): string {
     return this.appService.getHello();
   }
+
+  @Get('/init_datastore')
+  initDatastore() {
+    return this.appService.initDatastore();
+  }
 }

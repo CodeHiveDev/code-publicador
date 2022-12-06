@@ -236,6 +236,30 @@ export class GeoserverService {
     }
   }
 
+  async updateRaster2(file: any, store:any) {
+    try {
+      //const pathfile = `${this.WORKSPACE}/${store}/${file}`;
+
+      const rasterPath = file;
+      console.log("rasterPath",rasterPath)
+
+      const { data, status } = await firstValueFrom(
+        this.httpService.post(
+          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${store}/external.imagemosaic?recalculate=nativebbox,latlonbbox`,
+          rasterPath,
+          { headers: { 'Content-Type': `text/plain` } },
+        ),
+      );
+      console.log('Update Raster => OK');
+
+      return data;
+    } catch (e) {
+      console.log('Error uodateRaster: ', e.message);
+
+      return true;
+    }
+  }
+
   async setConfigRaster(store: any) {
     try {
       const coverage =
