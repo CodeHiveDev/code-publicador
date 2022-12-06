@@ -18,14 +18,7 @@ export class RasterService {
     this.WORKSPACE = this.appConfigService.workspace;
   }
 
-  public async rasterHandler(
-    fileraster: any,
-    pathraster,
-    folder,
-    store,
-    nameraster,
-    type,
-  ) {
+  public async rasterHandler(pathraster, folder, store, nameraster, type) {
     await fs.rmSync('./tmp', { recursive: true, force: true });
 
     const items = await this.helperService.s3downloadRaster(type, folder);

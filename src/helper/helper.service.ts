@@ -1,15 +1,23 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { exec } from 'shelljs';
 import * as AWS from 'aws-sdk';
 import * as path from 'path';
 import * as AdmZip from 'adm-zip';
 import { mkdirSync, createWriteStream } from 'fs';
 import { AppConfigService } from 'src/config/config.service';
+import * as shp from 'shpjs';
+import { capasCatastroMinero } from 'src/common/constants/capas-catastro-minero';
+import { CapasCatastroMinero } from 'src/common/interfaces/capas-catastro-minero.interface';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 
 @Injectable()
 export class HelperService {
   private s3: AWS.S3;
-  constructor(private appConfigService: AppConfigService) {
+  constructor(
+    private appConfigService: AppConfigService,
+    @InjectDataSource() private readonly dataSource: DataSource,
+  ) {
     this.s3 = new AWS.S3();
   }
 
@@ -93,6 +101,81 @@ export class HelperService {
     exec(
       `aws s3 cp s3://${BUCKETNAME}/${folders} /tmp/${folders} --recursive --exclude "*" --include "${nameshapefile}*" --profile invap`,
     );
+  }
+
+  public async downloadFileS3(fullnameShapefile: string) {
+    const BUCKETNAME = this.appConfigService.bucketName;
+    const S3 = this.s3;
+
+    const bucketParams = {
+      Bucket: BUCKETNAME,
+      Key: fullnameShapefile,
+    };
+
+    const zipFile = await S3.getObject(bucketParams).promise();
+    const zipBody = zipFile.Body;
+
+    if (!zipBody) throw new BadRequestException();
+    if (!Buffer.isBuffer(zipBody))
+      throw new BadRequestException('Not a buffer');
+    return zipBody;
+  }
+
+  public async getGeometriesAndCapa(zipBody: Buffer, nameshapefile: string) {
+    const geojsonfile = await shp(zipBody);
+
+    if (Array.isArray(geojsonfile))
+      throw new BadRequestException(
+        `Error al intentar abrir el archivo ${nameshapefile} (zip)`,
+      );
+    const geojsons = geojsonfile.features;
+
+    const capa = capasCatastroMinero.find(
+      (el) => el.tabla === nameshapefile.toLowerCase(),
+    );
+
+    if (!capa)
+      throw new BadRequestException(`Capa ${nameshapefile} no configurada`);
+
+    const inputsGeom = geojsons.map((geometry) => {
+      const input = {};
+      input[capa.geometria.db] = geometry[capa.geometria.shapefile];
+      capa.propiedades.forEach((prop) => {
+        input[prop.db] = geometry.properties[prop.shapefile];
+      });
+      return input;
+    });
+
+    return { capa, inputsGeom };
+  }
+
+  public async deleteOldAndSaveNewGeometrias(
+    capa: CapasCatastroMinero,
+    inputsGeom: Record<string, any>[],
+  ) {
+    try {
+      const { inserted, deleted } = await this.dataSource.transaction(
+        async (transanctionManager) => {
+          const deleted = await transanctionManager.delete(capa.tabla, {});
+
+          const results = await transanctionManager
+            .createQueryBuilder()
+            .insert()
+            .into(capa.tabla, [
+              capa.geometria.db,
+              ...capa.propiedades.map((prop) => prop.db),
+            ])
+            .values(inputsGeom)
+            .returning(capa.retorna)
+            .execute();
+
+          return { inserted: results.raw.length, deleted: deleted.affected };
+        },
+      );
+      return { inserted, deleted };
+    } catch (error) {
+      throw new BadRequestException(error.message, error.detail);
+    }
   }
 
   public async s3download(nameshapefile: string, folders: string) {
