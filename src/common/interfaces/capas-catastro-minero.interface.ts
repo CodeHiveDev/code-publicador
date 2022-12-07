@@ -8,4 +8,5 @@ export interface CapasCatastroMinero {
   geometria: ColumnasCapas;
   propiedades: ColumnasCapas[];
   retorna: string;
+  style: string;
 }

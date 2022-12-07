@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { exec } from 'shelljs';
 import * as AWS from 'aws-sdk';
 import * as path from 'path';
@@ -14,6 +14,7 @@ import { DataSource } from 'typeorm';
 @Injectable()
 export class HelperService {
   private s3: AWS.S3;
+  private readonly logger = new Logger(HelperService.name);
   constructor(
     private appConfigService: AppConfigService,
     @InjectDataSource() private readonly dataSource: DataSource,
@@ -112,41 +113,53 @@ export class HelperService {
       Key: fullnameShapefile,
     };
 
-    const zipFile = await S3.getObject(bucketParams).promise();
-    const zipBody = zipFile.Body;
+    try {
+      const zipFile = await S3.getObject(bucketParams).promise();
+      const zipBody = zipFile.Body;
 
-    if (!zipBody) throw new BadRequestException();
-    if (!Buffer.isBuffer(zipBody))
-      throw new BadRequestException('Not a buffer');
-    return zipBody;
+      if (!Buffer.isBuffer(zipBody)) {
+        this.logger.error('Not a buffer');
+        return;
+      }
+      return zipBody;
+    } catch (error) {
+      this.logger.error(`- Error downloadFileS3 - ${error}`);
+    }
   }
 
   public async getGeometriesAndCapa(zipBody: Buffer, nameshapefile: string) {
     const geojsonfile = await shp(zipBody);
 
-    if (Array.isArray(geojsonfile))
-      throw new BadRequestException(
+    if (Array.isArray(geojsonfile)) {
+      this.logger.error(
         `Error al intentar abrir el archivo ${nameshapefile} (zip)`,
       );
-    const geojsons = geojsonfile.features;
+      return {};
+    } else {
+      const geojsons = geojsonfile.features;
 
-    const capa = capasCatastroMinero.find(
-      (el) => el.tabla === nameshapefile.toLowerCase(),
-    );
+      const capa = capasCatastroMinero.find(
+        (el) => el.tabla === nameshapefile.toLowerCase(),
+      );
 
-    if (!capa)
-      throw new BadRequestException(`Capa ${nameshapefile} no configurada`);
+      if (!capa) {
+        this.logger.error(`Capa ${nameshapefile} no configurada`);
+        return {};
+      } else {
+        const inputsGeom = geojsons.map((geometry) => {
+          const input = {};
+          input[capa.geometria.db] = geometry[capa.geometria.shapefile];
+          capa.propiedades.forEach((prop) => {
+            input[prop.db] = Number.isNaN(geometry.properties[prop.shapefile])
+              ? null
+              : geometry.properties[prop.shapefile];
+          });
+          return input;
+        });
 
-    const inputsGeom = geojsons.map((geometry) => {
-      const input = {};
-      input[capa.geometria.db] = geometry[capa.geometria.shapefile];
-      capa.propiedades.forEach((prop) => {
-        input[prop.db] = geometry.properties[prop.shapefile];
-      });
-      return input;
-    });
-
-    return { capa, inputsGeom };
+        return { capa, inputsGeom };
+      }
+    }
   }
 
   public async deleteOldAndSaveNewGeometrias(
@@ -172,16 +185,19 @@ export class HelperService {
           return { inserted: results.raw.length, deleted: deleted.affected };
         },
       );
+      this.logger.log(
+        `Elimnados ${deleted} filas e insertadas ${inserted} filas`,
+      );
       return { inserted, deleted };
     } catch (error) {
-      throw new BadRequestException(error.message, error.detail);
+      this.logger.error(`- Error deleteOldAndSaveNewGeometrias - ${error}`);
     }
   }
 
   public async s3download(nameshapefile: string, folders: string) {
     const BUCKETNAME = this.appConfigService.bucketName;
     const S3 = this.s3;
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const options = {
         Bucket: `${BUCKETNAME}`,
         Prefix: `${folders}`,
@@ -219,7 +235,7 @@ export class HelperService {
     const BUCKETNAME = this.appConfigService.bucketName;
     const S3 = this.s3;
     let itemsR;
-    await new Promise((resolve, reject) => {
+    await new Promise((resolve) => {
       const options = {
         Bucket: `${BUCKETNAME}`,
         Prefix: `${folders}`,
@@ -264,7 +280,7 @@ export class HelperService {
       Prefix: `${folders}`,
     };
 
-    await S3.listObjectsV2(options, function (err, data) {
+    S3.listObjectsV2(options, function (err, data) {
       if (err) {
         console.log('err', err);
       } else {
@@ -281,7 +297,7 @@ export class HelperService {
             Key: name,
           };
 
-          return new Promise((resolve, reject) => {
+          return new Promise((resolve) => {
             S3.getObject(params)
               .createReadStream()
               .pipe(

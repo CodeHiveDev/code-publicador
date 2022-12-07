@@ -38,6 +38,7 @@
     "class-validator": "^0.13.2",
     "dbf-reader": "^1.0.3",
     "dotenv": "^16.0.1",
+    "file-type": "^16.5.4",
     "fs": "0.0.1-security",
     "js-yaml": "^4.1.0",
     "module-alias": "^2.2.2",

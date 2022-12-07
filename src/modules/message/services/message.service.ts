@@ -47,9 +47,9 @@ export class MessageService {
       pathAndFile = pathAndFile.slice(0, -3) + 'zip';
       this.shaperService.shapeHandler(
         pathAndFile,
-        sms.folder,
         sms.filename,
         'Geometry',
+        sms.style,
       );
     }
     if (sms.type === 'tif')

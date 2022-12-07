@@ -17,6 +17,8 @@ export default registerAs('app', () => ({
   serverUser: process.env.SERVER_USER,
   serverPassword: process.env.SERVER_PASSWORD,
   bucketName: process.env.BUCKETNAME,
-  workspace: process.env.WORKSPACE,
-  store: process.env.STORE,
+  workspaceRaster: process.env.WORKSPACE_RASTER,
+  datastoreRaster: process.env.DATASTORE_RASTER,
+  workspaceCatastroMinero: process.env.WORKSPACE_CATASTRO_MINERO,
+  datastoreCatastroMinero: process.env.DATASTORE_CATASTRO_MINERO,
 }));

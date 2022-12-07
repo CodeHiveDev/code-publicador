@@ -1,3 +1,4 @@
+import { MessageService } from '@modules/message/services/message.service';
 import { HttpService } from '@nestjs/axios';
 import { HttpException, Injectable } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
@@ -8,6 +9,7 @@ export class AppService {
   constructor(
     private readonly httpService: HttpService,
     private readonly appConfigService: AppConfigService,
+    private readonly messageService: MessageService,
   ) {}
   getHello(): string {
     return 'Hello World!';
@@ -37,7 +39,7 @@ export class AppService {
 
     try {
       const res = this.httpService.post(
-        `http://${this.appConfigService.serverHost}/geoserver/rest/workspaces/${this.appConfigService.workspace}/datastores`,
+        `http://${this.appConfigService.serverHost}/geoserver/rest/workspaces/${this.appConfigService.workspaceCatastroMinero}/datastores`,
         dataStore,
         { headers: { 'Content-Type': `application/json` } },
       );

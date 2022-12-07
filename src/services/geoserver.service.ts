@@ -1,17 +1,12 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { AxiosResponse } from 'axios';
 import { firstValueFrom } from 'rxjs';
 import * as fs from 'fs';
-import path = require('path');
-import { renderFile } from 'template-file';
-import { response } from 'express';
 import console = require('console');
 import { AppConfigService } from 'src/config/config.service';
 
 @Injectable()
 export class GeoserverService {
-  private TPLDIR: string;
   private WORKSPACE: string;
   private STORE: string;
   private readonly logger = new Logger(GeoserverService.name);
@@ -20,20 +15,17 @@ export class GeoserverService {
     private appConfigService: AppConfigService,
     private httpService: HttpService,
   ) {
-    this.TPLDIR = path.join(__dirname, '..', 'modules', 'shaper', 'tpl');
-    console.log('this.TPLDIR', this.TPLDIR);
-    console.log('SERVER_HOST', this.appConfigService.postgresHost);
-    this.WORKSPACE = this.appConfigService.workspace;
-    this.STORE = this.appConfigService.store;
+    this.WORKSPACE = this.appConfigService.workspaceRaster;
+    this.STORE = this.appConfigService.datastoreRaster;
   }
   host = this.appConfigService.serverHost;
 
-  async getLayerName(layername: string) {
+  async getLayerName(layername: string, workspace: string, datastore: string) {
     try {
       this.logger.log(`Verificando si capa '${layername}' existe`);
       const { data } = await firstValueFrom(
         this.httpService.get(
-          `http://${this.host}/geoserver/rest/workspaces/Mineria/datastores/postgis/featuretypes/${layername}.json`,
+          `http://${this.host}/geoserver/rest/workspaces/${workspace}/datastores/${datastore}/featuretypes/${layername}.json`,
         ),
       );
       this.logger.log(`Capa '${layername}' YA existe`);
@@ -42,38 +34,35 @@ export class GeoserverService {
       if (e.response.status === 404) {
         this.logger.log(`Capa '${layername}' NO existe`);
       } else {
-        this.logger.error(`${e.message}: ${e.response?.data}`);
+        this.logger.error(
+          `- Error getLayerName - ${e.message}: ${e.response?.data}`,
+        );
       }
       return;
     }
   }
 
-  async publishLayer(layername: string, type: string) {
+  async publishLayer(
+    layername: string,
+    type: string,
+    workspace: string,
+    datastore: string,
+  ) {
     try {
-      // type = type === 'zip' ? 'shp' : type;
-      // const dataType = {
-      //   nameshapefile: layername,
-      //   G_HOST: this.host,
-      //   type: type,
-      // };
-      // const datas = await renderFile(
-      //   `${this.TPLDIR}/featureType.tpl`,
-      //   dataType,
-      // );
       this.logger.log(`Creando capa '${layername}'`);
 
-      const newData = {
+      const dataLayer = {
         featureType: {
           name: layername,
-          namespace: { name: 'Mineria' },
+          namespace: { name: workspace },
           title: layername,
         },
       };
 
       const { data } = await firstValueFrom(
         this.httpService.post(
-          `http://${this.host}/geoserver/rest/workspaces/Mineria/datastores/postgis/featuretypes`,
-          newData,
+          `http://${this.host}/geoserver/rest/workspaces/${workspace}/datastores/${datastore}/featuretypes`,
+          dataLayer,
           {
             headers: {
               'Content-Type': 'application/json',
@@ -84,7 +73,9 @@ export class GeoserverService {
       this.logger.log(`Nueva capa creada: ${layername}`);
       return data;
     } catch (e) {
-      this.logger.error(`${e.message}: ${e.response?.data}`);
+      this.logger.error(
+        `- Error publishLayer - ${e.message}: ${e.response?.data}`,
+      );
       return true;
     }
   }
@@ -104,63 +95,74 @@ export class GeoserverService {
         this.logger.log(`Estilo '${stylename}' NO existe`);
       } else {
         this.logger.error(
-          `- Error GetStye - ${e.message}: ${e.response?.data}`,
+          `- Error getStyle - ${e.message}: ${e.response?.data}`,
         );
       }
       return;
     }
   }
-  async createStyle(layername: any) {
+  async createStyle(layerName: string) {
     try {
-      const dataStyle = `<style><name>${layername}</name><filename>${layername}.sld</filename></style>`;
+      this.logger.log(`Creando estilo '${layerName}'`);
+      const dataStyle = `<style><name>${layerName}</name><filename>${layerName}.sld</filename></style>`;
 
-      const { data, status } = await firstValueFrom(
+      const { data } = await firstValueFrom(
         this.httpService.post(
           `http://${this.host}/geoserver/rest/styles`,
           dataStyle,
         ),
       );
 
+      this.logger.log(`Estilo creado: '${layerName}'`);
       return data;
     } catch (e) {
-      console.log('Error createStyle: ', e.message);
+      this.logger.error(
+        `- Error createStyle - ${e.message}: ${e.response?.data}`,
+      );
 
-      return true;
+      return;
     }
   }
-  async uploadStyle(sldfile: any, nameshapefile: any) {
+  async uploadStyle(styleString: string, styleName: string) {
     try {
-      const style = fs.readFileSync(sldfile, { encoding: 'utf-8' });
-      const { data, status } = await firstValueFrom(
+      this.logger.log(`Subiendo estilo '${styleName}'`);
+      const { data } = await firstValueFrom(
         this.httpService.put(
-          `http://${this.host}/geoserver/rest/styles/${nameshapefile}`,
-          style,
+          `http://${this.host}/geoserver/rest/styles/${styleName}`,
+          styleString,
           { headers: { 'Content-Type': `application/vnd.ogc.sld+xml` } },
         ),
       );
 
+      this.logger.log(`Estilo subido: '${styleName}'`);
       return data;
     } catch (e) {
-      console.log('Error uploadStyle: ', e.message);
-      return true;
+      this.logger.error(
+        `- Error uploadStyle - ${e.message}: ${e.response?.data}`,
+      );
+      return;
     }
   }
 
-  async setLayerStyle(layername: any, stylename: any) {
+  async setLayerStyle(layerName: string, styleName: string, workspace: string) {
     try {
-      const dataStyle = `<layer><defaultStyle><name>${stylename}</name></defaultStyle></layer>`;
-      const { data, status } = await firstValueFrom(
+      this.logger.log(`Aplicando estilo '${styleName}' en capa '${layerName}'`);
+      const dataStyle = `<layer><defaultStyle><name>${styleName}</name></defaultStyle></layer>`;
+      const { data } = await firstValueFrom(
         this.httpService.put(
-          `http://${this.host}/geoserver/rest/layers/Mineria:${layername}`,
+          `http://${this.host}/geoserver/rest/layers/${workspace}:${layerName}`,
           dataStyle,
         ),
       );
 
+      this.logger.log(`Estilo '${styleName}' aplicado en capa '${layerName}'`);
       return data;
     } catch (e) {
-      console.log('Error uploadStyle: ', e.message);
+      this.logger.error(
+        `- Error setLayerStyle - ${e.message}: ${e.response?.data}`,
+      );
 
-      return true;
+      return;
     }
   }
   async publishRaster(file: any, type: any) {
@@ -236,12 +238,12 @@ export class GeoserverService {
     }
   }
 
-  async updateRaster2(file: any, store:any) {
+  async updateRaster2(file: any, store: any) {
     try {
       //const pathfile = `${this.WORKSPACE}/${store}/${file}`;
 
       const rasterPath = file;
-      console.log("rasterPath",rasterPath)
+      console.log('rasterPath', rasterPath);
 
       const { data, status } = await firstValueFrom(
         this.httpService.post(
