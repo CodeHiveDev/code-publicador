@@ -1,4 +1,3 @@
-import { MessageService } from '@modules/message/services/message.service';
 import { HttpService } from '@nestjs/axios';
 import { HttpException, Injectable } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
@@ -9,7 +8,6 @@ export class AppService {
   constructor(
     private readonly httpService: HttpService,
     private readonly appConfigService: AppConfigService,
-    private readonly messageService: MessageService,
   ) {}
   getHello(): string {
     return 'Hello World!';
