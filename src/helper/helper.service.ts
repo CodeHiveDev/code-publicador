@@ -104,7 +104,7 @@ export class HelperService {
     );
   }
 
-  public async downloadFileS3(fullnameShapefile: string) {
+  public async downloadFileS3(fullnameShapefile: string): Promise<Buffer> {
     const BUCKETNAME = this.appConfigService.bucketName;
     const S3 = this.s3;
 
@@ -124,10 +124,11 @@ export class HelperService {
       return zipBody;
     } catch (error) {
       this.logger.error(`- Error downloadFileS3 - ${error}`);
+      return;
     }
   }
 
-  public async getGeometriesAndCapa(zipBody: Buffer, nameshapefile: string) {
+  public async getGeometriasAndCapa(zipBody: Buffer, nameshapefile: string) {
     const geojsonfile = await shp(zipBody);
 
     if (Array.isArray(geojsonfile)) {
@@ -194,43 +195,6 @@ export class HelperService {
     }
   }
 
-  public async s3download(nameshapefile: string, folders: string) {
-    const BUCKETNAME = this.appConfigService.bucketName;
-    const S3 = this.s3;
-    return new Promise((resolve) => {
-      const options = {
-        Bucket: `${BUCKETNAME}`,
-        Prefix: `${folders}`,
-      };
-      S3.listObjectsV2(options)
-        .promise()
-        .then((obj) => {
-          const items = obj['Contents'].filter((item) =>
-            item.Key.includes(`${nameshapefile}.`),
-          );
-          mkdirSync(`/tmp/${folders}/`, { recursive: true });
-          items.forEach((element) => {
-            const name = element.Key;
-            console.log('Descargando... ', name);
-            const params = {
-              Bucket: `${BUCKETNAME}`,
-              Key: name,
-            };
-
-            S3.getObject(params)
-              .createReadStream()
-              .pipe(
-                createWriteStream(
-                  path.join(`/tmp/${folders}/`, name.split('/')[2]),
-                ),
-              )
-              .on('close', () => {
-                resolve(path.join(`/tmp/${folders}/`, name.split('/')[2]));
-              });
-          });
-        });
-    });
-  }
   public async s3downloadRaster(type: string, folders: string) {
     const BUCKETNAME = this.appConfigService.bucketName;
     const S3 = this.s3;

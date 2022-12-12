@@ -53,7 +53,7 @@ export class ShaperService {
       return;
     }
 
-    const { capa, inputsGeom } = await this.helperService.getGeometriesAndCapa(
+    const { capa, inputsGeom } = await this.helperService.getGeometriasAndCapa(
       zipBody,
       layerName,
     );
@@ -74,14 +74,18 @@ export class ShaperService {
     if (!layername)
       await this.geoService.publishLayer(layerName, workspace, datastore);
 
+    // Se verifica la existencia del estilo para la capa y su data
     const styleEntry = await this.geoService.getStyle(`${layerName}_style`);
 
+    // Se verifica si el estilo seleccionado no existe o existe pero es vacío
     if (!styleEntry) {
+      // En caso de no existir (undefined), se crea un estilo con el nombre
       if (typeof styleEntry === 'undefined')
         await this.geoService.createStyle(`${layerName}_style`);
       this.logger.warn(
         'Estilo de capa en blanco, actualizando por valor configurado',
       );
+      // Se actualiza la capa con los datos por defecto
       await this.geoService.uploadStyle(capa.style, `${layerName}_style`);
     }
 
@@ -100,6 +104,7 @@ export class ShaperService {
         this.logger.error('Tipo de documento SLD no es XML');
       else {
         const stypeString = styleData.toString();
+        // En caso de existir archivo .sld y este ser de formato XML, es actualizada el estilo con la data proveniente del archivo
         await this.geoService.uploadStyle(stypeString, `${layerName}_style`);
       }
     } else {
