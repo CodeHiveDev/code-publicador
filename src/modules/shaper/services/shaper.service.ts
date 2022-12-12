@@ -4,6 +4,7 @@ import { GeoserverService } from '@services/geoserver.service';
 import { AppConfigService } from 'src/config/config.service';
 import * as AdmZip from 'adm-zip';
 import { fromBuffer } from 'file-type';
+import { MessageIDE } from 'src/common/validator/message-ide.validator';
 
 @Injectable()
 export class ShaperService {
@@ -20,62 +21,75 @@ export class ShaperService {
       throw new Error(`GEOSERVER variables are missing`);
     }
   }
-  public async shapeHandler(
-    pathAndFile: string,
-    nameShapefile: string,
-    type: string,
-    style?: string,
-  ) {
-    this.logger.log(`Iniciando shaperHandler para '${nameShapefile}'`);
+  public async shapeHandler({
+    workspace,
+    datastore,
+    layerName,
+    style,
+    path,
+    fileName,
+  }: MessageIDE) {
+    this.logger.log(
+      `Iniciando shaperHandler para '${layerName}' con archivo '${fileName}'`,
+    );
 
-    const shpLowerCase = nameShapefile.toLowerCase();
-    const zipBody = await this.helperService.downloadFileS3(pathAndFile);
+    if (!fileName) {
+      this.logger.error(`Finalizando shaperHandler: archivo no indicado`);
+      return;
+    }
+
+    workspace = workspace
+      ? workspace
+      : this.appConfigService.workspaceCatastroMinero;
+
+    // const shpLowerCase = nameShapefile.toLowerCase();
+    const zipBody = await this.helperService.downloadFileS3(
+      `${path}/${fileName}`,
+    );
 
     if (!zipBody) {
-      this.logger.error(`Archivo ${nameShapefile}.zip no encontrado en S3`);
+      this.logger.error(`Archivo '${fileName}' no encontrado en S3`);
       this.logger.log('Finalizando shaperHandler');
       return;
     }
 
     const { capa, inputsGeom } = await this.helperService.getGeometriesAndCapa(
       zipBody,
-      shpLowerCase,
+      layerName,
     );
 
     if (!capa || !inputsGeom) {
-      this.logger.log(`Finalizado sin importar capa: '${nameShapefile}'`);
+      this.logger.log(`Finalizado sin importar capa: '${fileName}'`);
       return 'done';
     }
 
     await this.helperService.deleteOldAndSaveNewGeometrias(capa, inputsGeom);
 
     const layername = await this.geoService.getLayerName(
-      shpLowerCase,
-      this.appConfigService.workspaceCatastroMinero,
-      this.appConfigService.datastoreCatastroMinero,
+      layerName,
+      workspace,
+      datastore,
     );
 
     if (!layername)
-      await this.geoService.publishLayer(
-        shpLowerCase,
-        type,
-        this.appConfigService.workspaceCatastroMinero,
-        this.appConfigService.datastoreCatastroMinero,
-      );
+      await this.geoService.publishLayer(layerName, workspace, datastore);
 
-    const styleEntry = await this.geoService.getStyle(`${shpLowerCase}_style`);
+    const styleEntry = await this.geoService.getStyle(`${layerName}_style`);
 
     if (!styleEntry) {
       if (typeof styleEntry === 'undefined')
-        await this.geoService.createStyle(`${shpLowerCase}_style`);
+        await this.geoService.createStyle(`${layerName}_style`);
       this.logger.warn(
         'Estilo de capa en blanco, actualizando por valor configurado',
       );
-      await this.geoService.uploadStyle(capa.style, `${shpLowerCase}_style`);
+      await this.geoService.uploadStyle(capa.style, `${layerName}_style`);
     }
 
     const zipFile = new AdmZip(zipBody);
-    const styleFile = zipFile.getEntry(`${nameShapefile}.sld`);
+    const zipEntries = zipFile.getEntries();
+    const styleFile = zipEntries.find(
+      (entry) => entry.name.slice(entry.name.length - 3) === 'sld',
+    );
 
     if (styleFile) {
       this.logger.log('Archivo de estilos .sld encontrado en .zip');
@@ -86,23 +100,17 @@ export class ShaperService {
         this.logger.error('Tipo de documento SLD no es XML');
       else {
         const stypeString = styleData.toString();
-        await this.geoService.uploadStyle(stypeString, `${shpLowerCase}_style`);
+        await this.geoService.uploadStyle(stypeString, `${layerName}_style`);
       }
     } else {
       this.logger.warn('Archivo de estilos .sld NO encontrado');
     }
 
     // Apply Style
-    const styleName = style ? style : `${shpLowerCase}_style`;
-    await this.geoService.setLayerStyle(
-      shpLowerCase,
-      styleName,
-      this.appConfigService.workspaceCatastroMinero,
-    );
+    const styleName = style ? style : `${layerName}_style`;
+    await this.geoService.setLayerStyle(layerName, styleName, workspace);
 
-    this.logger.log(
-      `Finalizado e importado shaperHandler para '${nameShapefile}'.`,
-    );
+    this.logger.log(`Finalizado e importado shaperHandler para '${fileName}'.`);
 
     return 'done';
   }
