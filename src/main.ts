@@ -6,7 +6,9 @@ import { AppConfigService } from './config/config.service';
 
 async function bootstrap() {
   require('module-alias/register');
-  const app: NestExpressApplication = await NestFactory.create(AppModule);
+  const app: NestExpressApplication = await NestFactory.create(AppModule, {
+    logger: ['error', 'warn', 'log', 'verbose', 'debug'],
+  });
   const appConfig: AppConfigService = app.get(AppConfigService);
   const port: number = appConfig.port ? appConfig.port : 5000;
 

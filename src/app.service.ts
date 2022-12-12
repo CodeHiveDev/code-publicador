@@ -37,7 +37,7 @@ export class AppService {
 
     try {
       const res = this.httpService.post(
-        `http://${this.appConfigService.serverHost}/geoserver/rest/workspaces/${this.appConfigService.workspace}/datastores`,
+        `http://${this.appConfigService.serverHost}/geoserver/rest/workspaces/${this.appConfigService.workspaceCatastroMinero}/datastores`,
         dataStore,
         { headers: { 'Content-Type': `application/json` } },
       );

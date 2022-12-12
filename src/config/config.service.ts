@@ -69,11 +69,19 @@ export class AppConfigService {
     return this.configService.get<string>('app.bucketName');
   }
 
-  get workspace(): string {
-    return this.configService.get<string>('app.workspace');
+  get workspaceRaster(): string {
+    return this.configService.get<string>('app.workspaceRaster');
   }
 
-  get store(): string {
-    return this.configService.get<string>('app.store');
+  get datastoreRaster(): string {
+    return this.configService.get<string>('app.datastoreRaster');
+  }
+
+  get workspaceCatastroMinero(): string {
+    return this.configService.get<string>('app.workspaceCatastroMinero');
+  }
+
+  get datastoreCatastroMinero(): string {
+    return this.configService.get<string>('app.datastoreCatastroMinero');
   }
 }

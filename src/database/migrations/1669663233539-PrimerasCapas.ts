@@ -281,7 +281,7 @@ export class PrimerasCapas1669663233539 implements MigrationInterface {
           },
           {
             name: 'geom',
-            type: 'geometry(MultiPolygon,4326)',
+            type: 'geometry(MultiPoint,4326)',
           },
           {
             name: 'expediente',
