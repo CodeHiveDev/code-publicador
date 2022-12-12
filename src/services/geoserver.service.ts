@@ -20,19 +20,19 @@ export class GeoserverService {
   }
   host = this.appConfigService.serverHost;
 
-  async getLayerName(layername: string, workspace: string, datastore: string) {
+  async getLayerName(layerName: string, workspace: string, datastore: string) {
     try {
-      this.logger.log(`Verificando si capa '${layername}' existe`);
+      this.logger.log(`Verificando si capa '${layerName}' existe`);
       const { data } = await firstValueFrom(
         this.httpService.get(
-          `http://${this.host}/geoserver/rest/workspaces/${workspace}/datastores/${datastore}/featuretypes/${layername}.json`,
+          `http://${this.host}/geoserver/rest/workspaces/${workspace}/datastores/${datastore}/featuretypes/${layerName}.json`,
         ),
       );
-      this.logger.log(`Capa '${layername}' YA existe`);
+      this.logger.log(`Capa '${layerName}' YA existe`);
       return data;
     } catch (e) {
       if (e.response.status === 404) {
-        this.logger.log(`Capa '${layername}' NO existe`);
+        this.logger.log(`Capa '${layerName}' NO existe`);
       } else {
         this.logger.error(
           `- Error getLayerName - ${e.message}: ${e.response?.data}`,
@@ -42,12 +42,7 @@ export class GeoserverService {
     }
   }
 
-  async publishLayer(
-    layername: string,
-    type: string,
-    workspace: string,
-    datastore: string,
-  ) {
+  async publishLayer(layername: string, workspace: string, datastore: string) {
     try {
       this.logger.log(`Creando capa '${layername}'`);
 
