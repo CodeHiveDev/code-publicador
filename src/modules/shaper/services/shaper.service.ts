@@ -37,7 +37,7 @@ export class ShaperService {
       return;
     }
 
-    const { capa, inputsGeom } = await this.helperService.getGeometriesAndCapa(
+    const { capa, inputsGeom } = await this.helperService.getGeometriasAndCapa(
       zipBody,
       shpLowerCase,
     );
