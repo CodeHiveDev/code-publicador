@@ -63,14 +63,18 @@ export class ShaperService {
         this.appConfigService.datastoreCatastroMinero,
       );
 
+    // Se verifica la existencia del estilo para la capa y su data
     const styleEntry = await this.geoService.getStyle(`${shpLowerCase}_style`);
 
+    // Se verifica si el estilo seleccionado no existe o existe pero es vacío
     if (!styleEntry) {
+      // En caso de no existir (undefined), se crea un estilo con el nombre
       if (typeof styleEntry === 'undefined')
         await this.geoService.createStyle(`${shpLowerCase}_style`);
       this.logger.warn(
         'Estilo de capa en blanco, actualizando por valor configurado',
       );
+      // Se actualiza la capa con los datos por defecto
       await this.geoService.uploadStyle(capa.style, `${shpLowerCase}_style`);
     }
 
@@ -86,6 +90,7 @@ export class ShaperService {
         this.logger.error('Tipo de documento SLD no es XML');
       else {
         const stypeString = styleData.toString();
+        // En caso de existir archivo .sld y este ser de formato XML, es actualizada el estilo con la data proveniente del archivo
         await this.geoService.uploadStyle(stypeString, `${shpLowerCase}_style`);
       }
     } else {
