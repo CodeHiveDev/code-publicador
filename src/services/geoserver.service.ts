@@ -218,14 +218,16 @@ export class GeoserverService {
 
       const { data, status } = await firstValueFrom(
         this.httpService.put(
-          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${store}/external.imagemosaic`,
+          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${store}/external.imagemosaic?recalculate=nativebbox,latlonbbox`,
           rasterPath,
           { headers: { 'Content-Type': `text/plain` } },
         ),
       );
+      
       console.log('Update Raster => OK');
 
       return data;
+
     } catch (e) {
       console.log('Error uodateRaster: ', e.message);
 
@@ -239,6 +241,9 @@ export class GeoserverService {
 
       const rasterPath = file;
       console.log('rasterPath', rasterPath);
+
+      console.log(`Waiting 10 seconds...`);
+      //await sleep(1 * 10000);
 
       const { data, status } = await firstValueFrom(
         this.httpService.post(
