@@ -6,7 +6,7 @@ import { RasterModule } from '@modules/raster/raster.module';
 import { ShaperModule } from '@modules/shaper/shaper.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TypeOrmConfigService } from './shared/typeorm/typeorm.service';
-import { HelperModule } from './helper/helper.module';
+import { HelperModule } from './helper/Helper.module';
 import { HttpModule } from '@nestjs/axios';
 import { HttpConfigService } from '@services/httpService.config';
 import { GeoserverService } from '@services/geoserver.service';
