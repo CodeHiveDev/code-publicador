@@ -248,7 +248,7 @@ export class GeoserverService {
       console.log('rasterPath', rasterPath);
 
       console.log(`Waiting 10 seconds...`);
-      await sleep(1 * 10000);
+      //await sleep(1 * 10000);
 
       const { data, status } = await firstValueFrom(
         this.httpService.post(
