@@ -223,14 +223,16 @@ export class GeoserverService {
 
       const { data, status } = await firstValueFrom(
         this.httpService.put(
-          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${store}/external.imagemosaic`,
+          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${store}/external.imagemosaic?recalculate=nativebbox,latlonbbox`,
           rasterPath,
           { headers: { 'Content-Type': `text/plain` } },
         ),
       );
+      
       console.log('Update Raster => OK');
 
       return data;
+
     } catch (e) {
       console.log('Error uodateRaster: ', e.message);
 
