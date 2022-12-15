@@ -5,7 +5,7 @@
   "compilerOptions": {
     "assets": [
       { "include": "config/envs/*", "outDir": "dist/src" },
-      "modules/shaper/tpl/*"
+      { "include": "modules/shaper/tpl/*", "outDir": "dist/src" }
     ]
   }
 }

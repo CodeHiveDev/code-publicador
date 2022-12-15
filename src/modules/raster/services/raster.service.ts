@@ -15,46 +15,19 @@ export class RasterService {
     private helperService: HelperService,
   ) {
     this.G_HOST = this.appConfigService.serverHost;
-    this.WORKSPACE = this.appConfigService.workspace;
+    this.WORKSPACE = this.appConfigService.workspaceRaster;
   }
 
-  public async rasterHandler(
-    fileraster: any,
-    pathraster,
-    folder,
-    store,
-    nameraster,
-    type,
-  ) {
+  public async rasterHandler(pathraster, folder, store, nameraster, type) {
     await fs.rmSync('./tmp', { recursive: true, force: true });
 
     const items = await this.helperService.s3downloadRaster(type, folder);
-
-    // items.forEach((element) => {
-
-    //   const name = element.Key.split('/')[2];
-    //   console.log(name);
-
-    // });
 
     const fileZip = await this.helperService.createZipArchive();
 
     await this.geoService.uploadRaster(fileZip, type, store);
 
-    //await this.GeoService.updateRaster(`file:///var/geoserver/datadir/data/${this.WORKSPACE}/${store}`,store)
-    //await this.GeoService.updateRaster(`file:///var/local/geoserver/data/${this.WORKSPACE}/${this.STORE}`)
-
-
-    items.forEach(async (element) => {
-
-      const name = element.Key.split('/')[2];
-      console.log(name);
-      await this.geoService.updateRaster2(`file:///var/geoserver/datadir/data/${this.WORKSPACE}/${store}/e${name}`,store)
-
-    });
-
-    //await this.geoService.setConfigRaster(store)
-
+    await this.geoService.updateRaster(`file:///var/geoserver/datadir/data/${this.WORKSPACE}/${store}`,store)
 
   }
 }
