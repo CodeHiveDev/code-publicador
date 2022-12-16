@@ -200,6 +200,7 @@ export class GeoserverService {
       return data;
     } catch (e) {
       console.log('Error uploadRaster: ', e.message);
+      console.log('Error uploadRaster: ', e);
 
       return true;
     }
@@ -230,6 +231,7 @@ export class GeoserverService {
 
     } catch (e) {
       console.log('Error uodateRaster: ', e.message);
+      console.log('Error uodateRaster: ', e);
 
       return true;
     }
