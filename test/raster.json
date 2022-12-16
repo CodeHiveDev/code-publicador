@@ -1,7 +1,7 @@
 {
     "action": { "DataType": "String", "StringValue": "semaforo" },
     "folder": { "DataType": "String", "StringValue": "publicador/rasters" },
-    "store": { "DataType": "String", "StringValue": "canterasX90" },
+    "store": { "DataType": "String", "StringValue": "canteras787" },
     "layerType": { "DataType": "String", "StringValue": "raster" },
     "datastore": { "DataType": "String", "StringValue": "tif" },
     "layerName": { "DataType": "String", "StringValue": "tif" },

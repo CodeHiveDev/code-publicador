@@ -31,7 +31,10 @@ export class RasterService {
 
     await this.geoService.uploadRaster(fileZip, type, store);
 
-    await this.geoService.updateRaster(`file:///var/geoserver/datadir/data/${this.WORKSPACE}/${store}`,store)
+    await this.geoService.updateRaster(`file:///var/geoserver/datadir/data/${this.WORKSPACE}/${store}`,store);
 
+    await this.geoService.setConfigRaster(store);
+
+    
   }
 }
