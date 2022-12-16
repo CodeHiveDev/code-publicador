@@ -48,24 +48,26 @@ export class MessageService {
             ].StringValue[0].toLowerCase() === 't';
         }
       });
-
+      
     const messageIDE = new MessageIDE(sms);
     const errors = await validate(messageIDE, {
       validationError: { target: false },
     });
-
+    
+    
     if (errors.length > 0) {
       const errorMessage = [];
       errors.map((el) => errorMessage.push(...Object.values(el.constraints)));
       this.logger.error('Errores en el mensaje', errorMessage);
       return;
     }
-
+    
     if (messageIDE.layerType === 'raster' && messageIDE.datasource === 'CM') {
       this.shaperService.shapeHandler(sms);
     }
-
+    
     let pathAndFile = sms.folder + sms.filename + '.' + sms.type;
+    this.logger.error('Errores en el mensajSSSe', "errorMessagSSSe");
 
     // Traer todos los archivos de esa extension
     if (sms.type === 'shp') {

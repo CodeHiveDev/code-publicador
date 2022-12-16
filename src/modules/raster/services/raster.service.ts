@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { HelperService } from 'src/helper/helper.service';
 import { GeoserverService } from '@services/geoserver.service';
 import * as fs from 'fs';
@@ -8,6 +8,7 @@ export class RasterService {
   private G_HOST: string;
   private WORKSPACE: string;
   private STORE: string;
+  private readonly logger = new Logger(RasterService.name);
   constructor(
     // TODO: eliminado forwardRef
     private appConfigService: AppConfigService,
@@ -19,6 +20,9 @@ export class RasterService {
   }
 
   public async rasterHandler(pathraster, folder, store, nameraster, type) {
+    this.logger.log(
+      `Iniciando rasterHandler para '${store}`,
+    );
     await fs.rmSync('./tmp', { recursive: true, force: true });
 
     const items = await this.helperService.s3downloadRaster(type, folder);
