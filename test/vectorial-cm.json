@@ -1,0 +1,8 @@
+{
+  "layerType": { "DataType": "String", "StringValue": "vectorial" },
+  "datastore": { "DataType": "String", "StringValue": "postgis" },
+  "layerName": { "DataType": "String", "StringValue": "DEMASIAS" },
+  "datasource": { "DataType": "String", "StringValue": "CM" },
+  "path": { "DataType": "String", "StringValue": "sample_cm" },
+  "fileName": { "DataType": "String", "StringValue": "DEMASIAS.zip" }
+}
