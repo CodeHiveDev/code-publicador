@@ -19,21 +19,22 @@ export class RasterService {
     this.WORKSPACE = this.appConfigService.workspaceRaster;
   }
 
-  public async rasterHandler(pathraster, folder, store, nameraster, type) {
+  public async rasterHandler(folder, datastore) {
     this.logger.log(
-      `Iniciando rasterHandler para '${store}`,
+      `Iniciando rasterHandler para '${datastore}`,
     );
+    
     await fs.rmSync('./tmp', { recursive: true, force: true });
 
-    const items = await this.helperService.s3downloadRaster(type, folder);
+    const items = await this.helperService.s3downloadRaster(folder);
 
     const fileZip = await this.helperService.createZipArchive();
 
-    await this.geoService.uploadRaster(fileZip, type, store);
+    await this.geoService.uploadRaster(fileZip, datastore);
 
-    await this.geoService.updateRaster(`file:///var/geoserver/datadir/data/${this.WORKSPACE}/${store}`,store);
+    await this.geoService.updateRaster(`file:///var/geoserver/datadir/data/${this.WORKSPACE}/${datastore}`,datastore);
 
-    await this.geoService.setConfigRaster(store);
+    await this.geoService.setConfigRaster(datastore);
 
     
   }

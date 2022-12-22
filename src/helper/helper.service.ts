@@ -195,7 +195,7 @@ export class HelperService {
     }
   }
 
-  public async s3downloadRaster(type: string, folders: string) {
+  public async s3downloadRaster(folders: string) {
     const BUCKETNAME = this.appConfigService.bucketName;
     const S3 = this.s3;
     let itemsR;
