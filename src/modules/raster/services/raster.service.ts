@@ -23,19 +23,36 @@ export class RasterService {
     this.logger.log(
       `Iniciando rasterHandler para '${datastore}`,
     );
-    
+
     await fs.rmSync('./tmp', { recursive: true, force: true });
 
     const items = await this.helperService.s3downloadRaster(folder);
 
-    const fileZip = await this.helperService.createZipArchive();
 
-    await this.geoService.uploadRaster(fileZip, datastore);
+    const arregloDeArreglos = []; // Aquí almacenamos los nuevos arreglos
+    console.log("Arreglo original: ", items);
+    const LONGITUD_PEDAZOS = 100; // Partir en arreglo de 100
+    for (let i = 0; i < items.length; i += LONGITUD_PEDAZOS) {
+      let pedazo = items.slice(i, i + LONGITUD_PEDAZOS);
+      arregloDeArreglos.push(pedazo);
+    }
+    console.log("Arreglo de arreglos: ", arregloDeArreglos);
 
-    await this.geoService.updateRaster(`file:///var/geoserver/datadir/data/${this.WORKSPACE}/${datastore}`,datastore);
+
+    arregloDeArreglos.forEach(async (element) => {
+
+      const fileZip = await this.helperService.createZipArchiveBach(element);
+
+      await this.geoService.uploadRaster(fileZip, datastore);
+
+    });
+
+
+
+    await this.geoService.updateRaster(`file:///var/geoserver/datadir/data/${this.WORKSPACE}/${datastore}`, datastore);
 
     await this.geoService.setConfigRaster(datastore);
 
-    
+
   }
 }
