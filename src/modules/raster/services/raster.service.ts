@@ -41,7 +41,7 @@ export class RasterService {
 
     arregloDeArreglos.forEach(async (element) => {
 
-      const fileZip = await this.helperService.createZipArchiveBach(element);
+      const fileZip = await this.helperService.createZipArchiveBatch(element);
 
       await this.geoService.uploadRaster(fileZip, datastore);
 

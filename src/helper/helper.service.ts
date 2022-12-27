@@ -203,7 +203,7 @@ export class HelperService {
     });
   }
 
-  public async createZipArchive(items: any) {
+  public async createZipArchive() {
     try {
       for (let i = 0; i < 2; i++) {
         console.log(`Waiting ${i} seconds... / CreateZipArchive`);
@@ -220,11 +220,11 @@ export class HelperService {
     }
   }
 
-  public async createZipArchiveBach(items: any) {
+  public async createZipArchiveBatch(items: any) {
     try {
       for (let i = 0; i < 2; i++) {
         console.log(`Waiting ${i} seconds... / CreateZipArchive`);
-        await sleep(i * 10000);
+        await sleep(i * 1000);
       }
       const zip = new AdmZip();
       const outputFile = './tmp/publicador/rasters/rasters.zip';
