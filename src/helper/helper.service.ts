@@ -207,7 +207,7 @@ export class HelperService {
     try {
       for (let i = 0; i < 2; i++) {
         console.log(`Waiting ${i} seconds... / CreateZipArchive`);
-        await sleep(i * 10000);
+        await sleep(i * 1000);
       }
       const zip = new AdmZip();
       const outputFile = './tmp/publicador/rasters/rasters.zip';
