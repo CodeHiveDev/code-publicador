@@ -5,6 +5,11 @@ import { AppConfigService } from 'src/config/config.service';
 import * as AdmZip from 'adm-zip';
 import { fromBuffer } from 'file-type';
 import { MessageIDE } from 'src/common/validator/message-ide.validator';
+import { capasCatastroMinero } from 'src/common/constants/capas-catastro-minero';
+import { capasProductosSatelitales } from 'src/common/constants/capas-productos-satelitales';
+import { numberToDate } from 'src/common/utils/number-to-date';
+import { Capa } from 'src/common/interfaces/capas.interface';
+import { KEYWORDS } from 'src/common/constants/keywords-geoserver';
 
 @Injectable()
 export class ShaperService {
@@ -21,7 +26,7 @@ export class ShaperService {
       throw new Error(`GEOSERVER variables are missing`);
     }
   }
-  public async shapeHandler({
+  public async shapeHandlerCM({
     workspace,
     datastore,
     layerName,
@@ -38,11 +43,6 @@ export class ShaperService {
       return;
     }
 
-    workspace = workspace
-      ? workspace
-      : this.appConfigService.workspaceCatastroMinero;
-
-    // const shpLowerCase = nameShapefile.toLowerCase();
     const zipBody = await this.helperService.downloadFileS3(
       `${path}/${fileName}`,
     );
@@ -56,11 +56,17 @@ export class ShaperService {
     const { capa, inputsGeom } = await this.helperService.getGeometriasAndCapa(
       zipBody,
       layerName,
+      capasCatastroMinero,
     );
 
     if (!capa || !inputsGeom) {
       this.logger.log(`Finalizado sin importar capa: '${fileName}'`);
       return 'done';
+    }
+
+    if (!(await this.geoService.checkDSPostgis(workspace, datastore))) {
+      this.logger.error(`No es posible usar ${workspace}:${datastore}`);
+      return;
     }
 
     await this.helperService.deleteOldAndSaveNewGeometrias(capa, inputsGeom);
@@ -72,7 +78,9 @@ export class ShaperService {
     );
 
     if (!layername)
-      await this.geoService.publishLayer(layerName, workspace, datastore);
+      await this.geoService.publishLayer(layerName, workspace, datastore, [
+        KEYWORDS.CATASTRO_MINERO,
+      ]);
 
     // Se verifica la existencia del estilo para la capa y su data
     const styleEntry = await this.geoService.getStyle(`${layerName}_style`);
@@ -89,6 +97,184 @@ export class ShaperService {
       await this.geoService.uploadStyle(capa.style, `${layerName}_style`);
     }
 
+    await this.updateStyleWithSLD(zipBody, layerName, style, workspace);
+
+    this.logger.log(`Finalizado e importado shaperHandler para '${fileName}'.`);
+
+    return 'done';
+  }
+
+  async shapeHandlerPS({
+    workspace,
+    datastore,
+    layerName,
+    style,
+    path,
+    fileName,
+    timeDimension,
+  }: MessageIDE) {
+    this.logger.log(
+      `Iniciando shaperHandler para '${layerName}' con archivo '${fileName}'`,
+    );
+
+    if (!timeDimension) {
+      this.logger.error(
+        'Finalizando shaperHandlerPs: no definida variable temporal',
+      );
+      return;
+    }
+
+    if (!fileName) {
+      this.logger.error(`Finalizando shaperHandlerPS: archivo no indicado`);
+      return;
+    }
+
+    const zipBody = await this.helperService.downloadFileS3(
+      `${path}/${fileName}`,
+    );
+
+    if (!zipBody) {
+      this.logger.error(
+        `Archivo '${fileName}' no encontrado en S3. Finalizando`,
+      );
+      return;
+    }
+
+    const { capa, inputsGeom } = await this.helperService.getGeometriasAndCapa(
+      zipBody,
+      layerName,
+      capasProductosSatelitales,
+    );
+
+    if (!capa || !inputsGeom) {
+      this.logger.log(`Finalizado sin importar capa: '${fileName}'`);
+      return 'done';
+    }
+
+    if (!(await this.geoService.checkDSPostgis(workspace, datastore))) {
+      this.logger.error(`No es posible usar ${workspace}:${datastore}`);
+      return;
+    }
+
+    const reformInputsGeom = inputsGeom.map((el: any) => {
+      el.fecha = numberToDate(el.fecha);
+      el.proc = numberToDate(el.proc);
+      return el;
+    });
+
+    await this.helperService.deleteOldAndSaveNewGeometrias(
+      capa,
+      reformInputsGeom,
+    );
+
+    const layername = await this.geoService.getLayerName(
+      layerName,
+      workspace,
+      datastore,
+    );
+
+    if (!layername)
+      await this.geoService.publishLayer(
+        layerName,
+        workspace,
+        datastore,
+        [KEYWORDS.PRODUCTOS_SATELITALES],
+        timeDimension,
+      );
+
+    const styleEntry = await this.geoService.getStyle(`${layerName}_style`);
+
+    if (!styleEntry) {
+      if (typeof styleEntry === 'undefined')
+        await this.geoService.createStyle(`${layerName}_style`);
+      this.logger.warn(
+        'Estilo de capa en blanco, actualizando por valor configurado',
+      );
+      await this.geoService.uploadStyle(capa.style, `${layerName}_style`);
+    }
+
+    await this.updateStyleWithSLD(zipBody, layerName, style, workspace);
+
+    this.logger.log(`Finalizado e importado shaperHandler para '${fileName}'.`);
+
+    return 'done';
+  }
+
+  async shapeHandlerCA({ workspace, datastore, path, fileName }: MessageIDE) {
+    this.logger.log(`Iniciando shaperHandlerCA con archivo '${fileName}'`);
+
+    if (!fileName) {
+      this.logger.error(`Finalizando shaperHandlerPS: archivo no indicado`);
+      return;
+    }
+
+    const zipBody = await this.helperService.downloadFileS3(
+      `${path}/${fileName}`,
+    );
+
+    const names: string[] = [];
+    const zip = new AdmZip(zipBody);
+    zip.forEach((entry) => names.push(entry.entryName.slice(0, -4)));
+
+    const uniqueNames = [...new Set(names)];
+
+    const exist = this.checkIfTableExist(
+      [...capasCatastroMinero, ...capasProductosSatelitales],
+      uniqueNames,
+    );
+
+    if (exist) {
+      this.logger.error(
+        `Una de las tablas a subir ya existe en los demás catálogos, abortando`,
+      );
+      return;
+    }
+
+    const deletedTables = await this.helperService.deleteTablesFromPostigs(
+      uniqueNames,
+    );
+
+    if (!deletedTables) {
+      this.logger.error('No se pudieron eliminar tablas, abortando');
+      return;
+    }
+
+    const created = await this.geoService.checkDSAndPublishLayer(
+      zipBody,
+      uniqueNames,
+      workspace,
+      datastore,
+    );
+
+    if (created !== 201) {
+      this.logger.error(
+        'No es posible publicar capa(s). Consulte con el administrador',
+      );
+      return;
+    }
+
+    const fts = await this.geoService.updateFeatureTypesWithKeyword(
+      workspace,
+      datastore,
+      uniqueNames,
+    );
+
+    if (fts && fts.length === 0) {
+      this.logger.error('Capas no pudieron actualizarse');
+      return;
+    }
+
+    this.logger.log('Finalizado y subidos con éxito');
+    return;
+  }
+
+  // RECURSOS PRIVADOS
+  private async updateStyleWithSLD(
+    zipBody: Buffer,
+    layerName: string,
+    style: string,
+    workspace: string,
+  ) {
     const zipFile = new AdmZip(zipBody);
     const zipEntries = zipFile.getEntries();
     const styleFile = zipEntries.find(
@@ -114,9 +300,18 @@ export class ShaperService {
     // Apply Style
     const styleName = style ? style : `${layerName}_style`;
     await this.geoService.setLayerStyle(layerName, styleName, workspace);
+  }
 
-    this.logger.log(`Finalizado e importado shaperHandler para '${fileName}'.`);
-
-    return 'done';
+  private checkIfTableExist(capas: Capa[], uniqueNames: string[]) {
+    let result = false;
+    const tablesName = capas.map((capa) => capa.tabla);
+    for (let i = 0; i < uniqueNames.length; i++) {
+      const name = uniqueNames[i].toLowerCase();
+      if (tablesName.includes(name)) {
+        result = true;
+        break;
+      }
+    }
+    return result;
   }
 }

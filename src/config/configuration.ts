@@ -19,6 +19,6 @@ export default registerAs('app', () => ({
   bucketName: process.env.BUCKETNAME,
   workspaceRaster: process.env.WORKSPACE_RASTER,
   datastoreRaster: process.env.DATASTORE_RASTER,
-  workspaceCatastroMinero: process.env.WORKSPACE_CATASTRO_MINERO,
-  datastoreCatastroMinero: process.env.DATASTORE_CATASTRO_MINERO,
+  workspaceVectores: process.env.WORKSPACE_VECTORES,
+  datastoreVectores: process.env.DATASTORE_VECTORES,
 }));
