@@ -47,9 +47,17 @@ export class RasterService {
 
     });
 
+    items.forEach(async (element) => {
+
+      const name = element.Key.split('/')[2];
+      console.log(name);
+      await this.geoService.updateRaster2(`file:///var/geoserver/datadir/data/${this.WORKSPACE}/${store}/e${name}`,store)
+
+    });
 
 
-    await this.geoService.updateRaster(`file:///var/geoserver/datadir/data/${this.WORKSPACE}/${datastore}`, datastore);
+
+    //await this.geoService.updateRaster(`file:///var/geoserver/datadir/data/${this.WORKSPACE}/${datastore}`, datastore);
 
     await this.geoService.setConfigRaster(datastore);
 
