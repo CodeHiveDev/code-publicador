@@ -230,7 +230,7 @@ export class HelperService {
       const outputFile = './tmp/publicador/rasters/rasters.zip';
       items.forEach(async (item) => {
 
-        zip.addLocalFile('./tmp/publicador/rasters/'+item.split('/')[2])
+        zip.addLocalFile('./tmp/publicador/rasters/'+item.Key.split.split('/')[2])
 
       })
 
