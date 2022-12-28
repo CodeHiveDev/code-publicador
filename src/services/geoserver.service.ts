@@ -356,15 +356,15 @@ export class GeoserverService {
     }
   }
 
-  async uploadRaster(file: any, type: any, store: any) {
+  async uploadRaster(file: any, datastore: any) {
     try {
-      const pathfile = `${this.WORKSPACE}/${store}/${file}`;
+      const pathfile = `${this.WORKSPACE}/${datastore}/${file}`;
 
       const fileZip = fs.createReadStream(`${file}`);
 
       const { data, status } = await firstValueFrom(
         this.httpService.post(
-          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${store}/file.imagemosaic?configure=false`,
+          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${datastore}/file.imagemosaic?configure=false`,
           fileZip,
           {
             headers: { 'Content-Type': `application/zip` },
@@ -383,9 +383,9 @@ export class GeoserverService {
     }
   }
 
-  async updateRaster(file: any, store: any) {
+  async updateRaster(file: any, datastore: any) {
     try {
-      const pathfile = `${this.WORKSPACE}/${store}/${file}`;
+      const pathfile = `${this.WORKSPACE}/${datastore}/${file}`;
 
       const rasterPath = file;
 
@@ -396,7 +396,7 @@ export class GeoserverService {
 
       const { data, status } = await firstValueFrom(
         this.httpService.put(
-          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${store}/external.imagemosaic?recalculate=nativebbox,latlonbbox`,
+          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${datastore}/external.imagemosaic?recalculate=nativebbox,latlonbbox`,
           rasterPath,
           { headers: { 'Content-Type': `text/plain` } },
         ),
@@ -406,6 +406,7 @@ export class GeoserverService {
 
       return data;
     } catch (e) {
+
       console.log('Error uodateRaster: ', e.message);
       console.log('Error uodateRaster: ', e);
 
@@ -440,7 +441,7 @@ export class GeoserverService {
     }
   }
 
-  async setConfigRaster(store: any) {
+  async setConfigRaster(datastore: any) {
     try {
       const coverage =
         '<coverage>\
@@ -456,7 +457,7 @@ export class GeoserverService {
 
       const { data, status } = await firstValueFrom(
         this.httpService.put(
-          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${store}/coverages/${store}`,
+          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${datastore}/coverages/${datastore}`,
           coverage,
           { headers: { 'Content-Type': `application/xml` } },
         ),

@@ -95,11 +95,8 @@ export class MessageService {
     }
     if (sms.type === 'tif')
       this.rasterService.rasterHandler(
-        pathAndFile,
         sms.folder,
-        sms.store,
-        sms.filename,
-        'GeoTIFF',
+        sms.datastore,
       );
   }
 }

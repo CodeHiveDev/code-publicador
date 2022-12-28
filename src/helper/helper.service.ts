@@ -21,81 +21,6 @@ export class HelperService {
     this.s3 = new AWS.S3();
   }
 
-  //Create table
-  public async createTable(nameshapefile: string) {
-    exec(
-      'PGPASSWORD=' +
-        this.appConfigService.pgPassword +
-        ' psql -h ' +
-        this.appConfigService.postgresHost +
-        ' -d ' +
-        this.appConfigService.postgresDb +
-        ' -p ' +
-        this.appConfigService.postgresPort +
-        ' -U ' +
-        this.appConfigService.postgresUser +
-        ' -c "CREATE TABLE IF NOT EXISTS public.shapefiles ( idshapefile serial NOT NULL, id_0 integer NOT NULL, layername varchar(100), expediente text, categoria text, fecha date, geom geometry, PRIMARY KEY (idshapefile))" ',
-    ); // -f "createshapefile" sql query
-    // Altern Table add column
-    exec(
-      'PGPASSWORD=' +
-        this.appConfigService.pgPassword +
-        ' psql -h ' +
-        this.appConfigService.postgresHost +
-        ' -d ' +
-        this.appConfigService.postgresDb +
-        ' -p ' +
-        this.appConfigService.postgresPort +
-        ' -U ' +
-        this.appConfigService.postgresUser +
-        ' -c "ALTER TABLE public.shapefiles ADD COLUMN IF NOT EXISTS layername varchar(100) DEFAULT ' +
-        nameshapefile +
-        ' " ',
-    );
-  }
-
-  //Create table
-  public async shapefilesUpdate(nameshapefile: string) {
-    // Insert field layername if is null
-    exec(
-      'PGPASSWORD=' +
-        this.appConfigService.pgPassword +
-        ' psql -h ' +
-        this.appConfigService.postgresHost +
-        ' -d ' +
-        this.appConfigService.postgresDb +
-        ' -p ' +
-        this.appConfigService.postgresPort +
-        ' -U ' +
-        this.appConfigService.postgresUser +
-        ' -c "UPDATE public.shapefiles SET layername = ' +
-        "'" +
-        nameshapefile +
-        "'" +
-        ' WHERE layername IS NULL" ',
-    ); //AND fecha = atributo fecha
-  }
-
-  //Shapefile to Postgis
-  public async shapefilesToPosg(pathandfile: string, nameshapefile: string) {
-    exec(
-      'shp2pgsql -a -s 4326 -I -W "latin1" /tmp/' +
-        pathandfile +
-        ' public.shapefiles | PGAPPNAME="' +
-        nameshapefile +
-        '" PGPASSWORD=' +
-        this.appConfigService.pgPassword +
-        ' psql -h ' +
-        this.appConfigService.postgresHost +
-        ' -d ' +
-        this.appConfigService.postgresDb +
-        ' -p ' +
-        this.appConfigService.postgresPort +
-        ' -U ' +
-        this.appConfigService.postgresUser +
-        ' ',
-    );
-  }
   public async copyS3execTmp(nameshapefile: string, folders: string) {
     const BUCKETNAME = this.appConfigService.bucketName;
     exec(
@@ -196,7 +121,7 @@ export class HelperService {
     }
   }
 
-  public async s3downloadRaster(type: string, folders: string) {
+  public async s3downloadRaster(folders: string) {
     const BUCKETNAME = this.appConfigService.bucketName;
     const S3 = this.s3;
     let itemsR;
@@ -283,7 +208,7 @@ export class HelperService {
     try {
       for (let i = 0; i < 2; i++) {
         console.log(`Waiting ${i} seconds... / CreateZipArchive`);
-        await sleep(i * 10000);
+        await sleep(i * 1000);
       }
       const zip = new AdmZip();
       const outputFile = './tmp/publicador/rasters/rasters.zip';
@@ -307,6 +232,25 @@ export class HelperService {
     } catch (error) {
       this.logger.error(`- Error deleteTablesFromPostigs - ${error.message}`);
       return;
+    }
+  }
+  public async createZipArchiveBatch(items: any) {
+    try {
+      for (let i = 0; i < 2; i++) {
+        console.log(`Waiting ${i} seconds... / CreateZipArchive`);
+        await sleep(i * 1000);
+      }
+      const zip = new AdmZip();
+      const outputFile = './tmp/publicador/rasters/rasters.zip';
+      items.forEach(async (item) => {
+        zip.addLocalFile('./tmp/publicador/rasters/' + item.split('/')[2]);
+      });
+
+      zip.writeZip(outputFile);
+      console.log(`Created ${outputFile} successfully`);
+      return outputFile;
+    } catch (e) {
+      console.log(`Something went wrong. ${e}`);
     }
   }
 }
