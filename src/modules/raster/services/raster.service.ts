@@ -19,22 +19,48 @@ export class RasterService {
     this.WORKSPACE = this.appConfigService.workspaceRaster;
   }
 
-  public async rasterHandler(pathraster, folder, store, nameraster, type) {
+  public async rasterHandler(folder, datastore) {
     this.logger.log(
-      `Iniciando rasterHandler para '${store}`,
+      `Iniciando rasterHandler para '${datastore}`,
     );
+
     await fs.rmSync('./tmp', { recursive: true, force: true });
 
-    const items = await this.helperService.s3downloadRaster(type, folder);
+    const items = await this.helperService.s3downloadRaster(folder);
 
-    const fileZip = await this.helperService.createZipArchive();
 
-    await this.geoService.uploadRaster(fileZip, type, store);
+    const arregloDeArreglos = []; // Aquí almacenamos los nuevos arreglos
+    console.log("Arreglo original: ", items);
+    const LONGITUD_PEDAZOS = 100; // Partir en arreglo de 100
+    for (let i = 0; i < items.length; i += LONGITUD_PEDAZOS) {
+      let pedazo = items.slice(i, i + LONGITUD_PEDAZOS);
+      arregloDeArreglos.push(pedazo);
+    }
+    console.log("Arreglo de arreglos: ", arregloDeArreglos);
 
-    await this.geoService.updateRaster(`file:///var/geoserver/datadir/data/${this.WORKSPACE}/${store}`,store);
 
-    await this.geoService.setConfigRaster(store);
+    arregloDeArreglos.forEach(async (element) => {
 
-    
+      const fileZip = await this.helperService.createZipArchiveBatch(element);
+
+      await this.geoService.uploadRaster(fileZip, datastore);
+
+    });
+
+    items.forEach(async (element) => {
+
+      const name = element.Key.split('/')[2];
+      console.log(name);
+      await this.geoService.updateRaster2(`file:///var/geoserver/datadir/data/${this.WORKSPACE}/${datastore}/e${name}`,datastore)
+
+    });
+
+
+
+    //await this.geoService.updateRaster(`file:///var/geoserver/datadir/data/${this.WORKSPACE}/${datastore}`, datastore);
+
+    await this.geoService.setConfigRaster(datastore);
+
+
   }
 }
