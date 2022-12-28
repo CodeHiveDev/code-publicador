@@ -47,7 +47,7 @@ export class RasterService {
 
     });
 
-    items.forEach(async (element) => {
+    await items.forEach(async (element) => {
 
       const name = element.Key.split('/')[2];
       console.log(name);

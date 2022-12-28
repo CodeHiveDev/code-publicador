@@ -242,7 +242,7 @@ export class HelperService {
       }
       const zip = new AdmZip();
       const outputFile = './tmp/publicador/rasters/rasters.zip';
-      items.forEach(async (item) => {
+      await items.forEach(async (item) => {
 
         zip.addLocalFile('./tmp/publicador/rasters/'+item.Key.split('/')[2])
 
