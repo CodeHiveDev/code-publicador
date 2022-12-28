@@ -77,11 +77,11 @@ export class AppConfigService {
     return this.configService.get<string>('app.datastoreRaster');
   }
 
-  get workspaceCatastroMinero(): string {
-    return this.configService.get<string>('app.workspaceCatastroMinero');
+  get workspaceVectores(): string {
+    return this.configService.get<string>('app.workspaceVectores');
   }
 
-  get datastoreCatastroMinero(): string {
-    return this.configService.get<string>('app.datastoreCatastroMinero');
+  get datastoreVectores(): string {
+    return this.configService.get<string>('app.datastoreVectores');
   }
 }

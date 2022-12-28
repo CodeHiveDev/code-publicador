@@ -4,6 +4,8 @@ import { firstValueFrom } from 'rxjs';
 import * as fs from 'fs';
 import console = require('console');
 import { AppConfigService } from 'src/config/config.service';
+import { metadataTimeDimension } from 'src/common/constants/metadata-time-dimension';
+import { KEYWORDS } from 'src/common/constants/keywords-geoserver';
 
 @Injectable()
 export class GeoserverService {
@@ -42,15 +44,27 @@ export class GeoserverService {
     }
   }
 
-  async publishLayer(layername: string, workspace: string, datastore: string) {
+  async publishLayer(
+    layername: string,
+    workspace: string,
+    datastore: string,
+    keywords: string[],
+    timeDimension?: string,
+  ) {
     try {
       this.logger.log(`Creando capa '${layername}'`);
+      let metadata = undefined;
+      if (timeDimension) metadata = metadataTimeDimension(timeDimension);
 
       const dataLayer = {
         featureType: {
           name: layername,
           namespace: { name: workspace },
           title: layername,
+          keywords: {
+            string: keywords,
+          },
+          metadata,
         },
       };
 
@@ -160,6 +174,169 @@ export class GeoserverService {
       return;
     }
   }
+
+  async checkDSAndPublishLayer(
+    body: Buffer,
+    uniqueNames: string[],
+    workspace: string,
+    datastore: string,
+  ) {
+    try {
+      this.logger.log(
+        `Iniciando subida de archivos dentro de .zip a ${workspace}:${datastore}`,
+      );
+
+      const respDs = await this.httpService.axiosRef.get(
+        `http://${this.host}/geoserver/rest/workspaces/${workspace}/datastores/${datastore}`,
+      );
+
+      if (respDs.data.dataStore.type !== 'PostGIS') {
+        this.logger.error(`Datastore '${datastore}' no es de tipo PostGIS`);
+        return;
+      }
+
+      for (let i = 0; i < uniqueNames.length; i++) {
+        const name = uniqueNames[i];
+
+        const respFt = await this.httpService.axiosRef.get(
+          `http://${this.host}/geoserver/rest/workspaces/${workspace}/datastores/${datastore}/featuretypes/${name}`,
+          { validateStatus: () => true },
+        );
+
+        if (respFt.status !== 404) {
+          this.logger.log(`Eliminando capa '${name}'`);
+          await this.httpService.axiosRef.delete(
+            `http://${this.host}/geoserver/rest/workspaces/${workspace}/datastores/${datastore}/featuretypes/${name}?recurse=true`,
+          );
+        }
+      }
+
+      // REINICIO CACHÉ PARA PODER RECREAR TABLA EN POSTGIS
+      await this.httpService.axiosRef.post(
+        `http://${this.host}/geoserver/rest/reset`,
+      );
+
+      const respFt = await this.httpService.axiosRef.put(
+        `http://${this.host}/geoserver/rest/workspaces/${workspace}/datastores/${datastore}/file.shp`,
+        body,
+        {
+          headers: {
+            'Content-Type': 'application/zip',
+          },
+          params: {
+            configure: 'all',
+            update: 'overwrite',
+          },
+        },
+      );
+
+      this.logger.log(`Archivos subidos a ${workspace}:${datastore}`);
+      return respFt.status;
+    } catch (e) {
+      this.logger.error(
+        `- Error checkDSAndPublishLayer - ${e.message}: ${e.response?.data}`,
+      );
+
+      return;
+    }
+  }
+
+  async updateFeatureTypesWithKeyword(
+    workspace: string,
+    datastore: string,
+    uniqueNames: string[],
+  ) {
+    try {
+      this.logger.log(
+        `Inicio actualización de Feature Types subidos: ${uniqueNames.join(
+          ', ',
+        )}`,
+      );
+
+      const infoArray: any[] = [];
+      for (let i = 0; i < uniqueNames.length; i++) {
+        const name = uniqueNames[i];
+
+        const respFt = await this.httpService.axiosRef.get(
+          `http://${this.host}/geoserver/rest/workspaces/${workspace}/datastores/${datastore}/featuretypes/${name}`,
+          { validateStatus: () => true },
+        );
+
+        if (respFt.status === 404) {
+          const dataLayer = {
+            featureType: {
+              name,
+              namespace: { name: workspace },
+              title: name,
+              keywords: {
+                string: ['features', name, KEYWORDS.CAPAS_AUXILIARES],
+              },
+            },
+          };
+          await this.httpService.axiosRef.post(
+            `http://${this.host}/geoserver/rest/workspaces/${workspace}/datastores/${datastore}/featuretypes`,
+            dataLayer,
+            { headers: { 'Content-Type': 'application/json' } },
+          );
+          infoArray.push({ name, status: 'uploaded' });
+        } else {
+          const keywords: string[] = respFt.data.featureType?.keywords.string
+            ? respFt.data.featureType?.keywords.string
+            : [];
+          if (!keywords.includes(KEYWORDS.CAPAS_AUXILIARES)) {
+            keywords.push(KEYWORDS.CAPAS_AUXILIARES);
+            const data = {
+              featureType: {
+                keywords: {
+                  string: keywords,
+                },
+                attributes: {},
+              },
+            };
+            await this.httpService.axiosRef.put(
+              `http://${this.host}/geoserver/rest/workspaces/${workspace}/datastores/${datastore}/featuretypes/${name}?recalculate=nativebbox,latlonbbox,attributes,dimensions`,
+              data,
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+              },
+            );
+            infoArray.push({ name, status: 'updated' });
+          } else {
+            infoArray.push({ name, status: 'not_updated' });
+          }
+        }
+      }
+      this.logger.log(`Actualizadas capas: ${JSON.stringify(infoArray)}`);
+      return infoArray;
+    } catch (e) {
+      this.logger.error(
+        `- Error updateFeatureTypesWithKeyword - ${e.message}: ${e.response?.data}`,
+      );
+      return;
+    }
+  }
+
+  async checkDSPostgis(workspace: string, datastore: string) {
+    try {
+      const respDs = await this.httpService.axiosRef.get(
+        `http://${this.host}/geoserver/rest/workspaces/${workspace}/datastores/${datastore}`,
+      );
+
+      if (respDs.data.dataStore.type !== 'PostGIS') {
+        this.logger.error(`Datastore '${datastore}' no es de tipo PostGIS`);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      this.logger.error(
+        `Error tratando de obtener información de ${workspace}:${datastore}`,
+      );
+      return false;
+    }
+  }
+
   async publishRaster(file: any, type: any) {
     try {
       const datafile = `${this.WORKSPACE}/${this.STORE}/${file}`;
@@ -224,11 +401,10 @@ export class GeoserverService {
           { headers: { 'Content-Type': `text/plain` } },
         ),
       );
-      
+
       console.log('Update Raster => OK');
 
       return data;
-
     } catch (e) {
 
       console.log('Error uodateRaster: ', e.message);

@@ -1,9 +1,9 @@
-import { CapasCatastroMinero } from '../interfaces/capas-catastro-minero.interface';
+import { Capa } from '../interfaces/capas.interface';
 import { styleLine } from './style-line';
 import { stylePoint } from './style-point';
 import { stylePolygon } from './style-polygon';
 
-export const capasCatastroMinero: CapasCatastroMinero[] = [
+export const capasCatastroMinero: Capa[] = [
   {
     tabla: 'canteras',
     geometria: { db: 'geom', shapefile: 'geometry' },

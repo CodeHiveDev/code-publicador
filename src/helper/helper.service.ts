@@ -6,8 +6,7 @@ import * as AdmZip from 'adm-zip';
 import { mkdirSync, createWriteStream } from 'fs';
 import { AppConfigService } from 'src/config/config.service';
 import * as shp from 'shpjs';
-import { capasCatastroMinero } from 'src/common/constants/capas-catastro-minero';
-import { CapasCatastroMinero } from 'src/common/interfaces/capas-catastro-minero.interface';
+import { Capa } from 'src/common/interfaces/capas.interface';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 
@@ -53,7 +52,11 @@ export class HelperService {
     }
   }
 
-  public async getGeometriasAndCapa(zipBody: Buffer, nameshapefile: string) {
+  public async getGeometriasAndCapa(
+    zipBody: Buffer,
+    nameshapefile: string,
+    config: Capa[],
+  ) {
     const geojsonfile = await shp(zipBody);
 
     if (Array.isArray(geojsonfile)) {
@@ -64,9 +67,7 @@ export class HelperService {
     } else {
       const geojsons = geojsonfile.features;
 
-      const capa = capasCatastroMinero.find(
-        (el) => el.tabla === nameshapefile.toLowerCase(),
-      );
+      const capa = config.find((el) => el.tabla === nameshapefile);
 
       if (!capa) {
         this.logger.error(`Capa ${nameshapefile} no configurada`);
@@ -89,7 +90,7 @@ export class HelperService {
   }
 
   public async deleteOldAndSaveNewGeometrias(
-    capa: CapasCatastroMinero,
+    capa: Capa,
     inputsGeom: Record<string, any>[],
   ) {
     try {
@@ -220,6 +221,19 @@ export class HelperService {
     }
   }
 
+  public async deleteTablesFromPostigs(uniqueNames: string[]) {
+    try {
+      for (let i = 0; i < uniqueNames.length; i++) {
+        const name = uniqueNames[i];
+        const table = await this.dataSource.createQueryRunner().getTable(name);
+        if (table) await this.dataSource.createQueryRunner().dropTable(name);
+      }
+      return true;
+    } catch (error) {
+      this.logger.error(`- Error deleteTablesFromPostigs - ${error.message}`);
+      return;
+    }
+  }
   public async createZipArchiveBatch(items: any) {
     try {
       for (let i = 0; i < 2; i++) {
@@ -237,12 +251,10 @@ export class HelperService {
       zip.writeZip(outputFile);
       console.log(`Created ${outputFile} successfully`);
       return outputFile;
-
     } catch (e) {
       console.log(`Something went wrong. ${e}`);
     }
   }
-
 }
 
 function sleep(ms) {
