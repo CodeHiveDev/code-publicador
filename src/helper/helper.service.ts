@@ -234,6 +234,7 @@ export class HelperService {
       return;
     }
   }
+  
   public async createZipArchiveBatch(items: any) {
     try {
       for (let i = 0; i < 2; i++) {
@@ -244,15 +245,17 @@ export class HelperService {
       const outputFile = './tmp/publicador/rasters/rasters.zip';
 
       for(let item of items) {
-  
-
-        zip.addLocalFile('./tmp/publicador/rasters/'+item.Key.split('/')[2])
+        if (item.Key.split('/')[2] != '') {
+         console.log("items",item)
+        zip.addLocalFile('./tmp/publicador/rasters/e'+item.Key.split('/')[2])
 
       }
+    }
 
       zip.writeZip(outputFile);
       console.log(`Created ${outputFile} successfully`);
       return outputFile;
+
     } catch (e) {
       console.log(`Something went wrong. ${e}`);
     }
