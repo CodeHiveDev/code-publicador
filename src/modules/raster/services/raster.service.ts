@@ -51,10 +51,6 @@ export class RasterService {
       }
     }
 
-<<<<<<< HEAD
-    await items.forEach(async (element) => {
-=======
->>>>>>> main
 
     for(let element of items) {
       try {
