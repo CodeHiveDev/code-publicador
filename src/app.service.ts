@@ -1,19 +1,18 @@
 import { HttpService } from '@nestjs/axios';
-import { HttpException, Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
 import { AppConfigService } from './config/config.service';
 
 @Injectable()
-export class AppService {
+export class AppService implements OnModuleInit {
   constructor(
     private readonly httpService: HttpService,
     private readonly appConfigService: AppConfigService,
   ) {}
-  getHello(): string {
-    return 'Hello World!';
-  }
-
-  async initDatastore() {
+  async onModuleInit() {
+    console.log(
+      'ANTES DE EMPEZAR A ESCUCHAR VERIFICO SI EXISTE DATASTORE DE POSTGIS...',
+    );
     const dataStore = {
       dataStore: {
         name: 'postgis',
@@ -29,7 +28,10 @@ export class AppService {
             { '@key': 'database', $: this.appConfigService.postgresDb },
             { '@key': 'user', $: this.appConfigService.postgresUser },
             { '@key': 'passwd', $: this.appConfigService.pgPassword },
-            { '@key': 'dbtype', $: 'postgis' },
+            {
+              '@key': 'dbtype',
+              $: this.appConfigService.datastoreVectores,
+            },
           ],
         },
       },
@@ -37,22 +39,26 @@ export class AppService {
 
     try {
       const res = this.httpService.post(
-        `http://${this.appConfigService.serverHost}/geoserver/rest/workspaces/${this.appConfigService.workspaceCatastroMinero}/datastores`,
+        `http://${this.appConfigService.serverHost}/geoserver/rest/workspaces/${this.appConfigService.workspaceVectores}/datastores`,
         dataStore,
-        { headers: { 'Content-Type': `application/json` } },
+        { headers: { 'Content-Type': 'application/json' } },
       );
 
       const resolved = await lastValueFrom(res);
       return resolved.data;
     } catch (error: any) {
-      throw new HttpException(
-        {
-          statusCode: error.response.status,
-          message: error.message,
-          error: error.response.statusText + ': ' + error.response.data,
-        },
-        error.response.status,
-      );
+      if (error.response?.data.includes('already exists in workspace')) {
+        console.log('Datastore ya existe, continuando...');
+        return;
+      }
+      throw new Error(error);
     }
+  }
+  getHello(): string {
+    return 'Hello World!';
+  }
+
+  async initDatastore() {
+    return 'Cambiado';
   }
 }

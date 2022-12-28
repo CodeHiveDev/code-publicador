@@ -49,6 +49,10 @@ export class MessageService {
         }
       });
 
+    sms['workspace'] = sms.workspace
+      ? sms.workspace
+      : this.appConfigService.workspaceVectores;
+
     const messageIDE = new MessageIDE(sms);
     const errors = await validate(messageIDE, {
       validationError: { target: false },
@@ -65,11 +69,24 @@ export class MessageService {
       messageIDE.layerType === 'vectorial' &&
       messageIDE.datasource === 'CM'
     ) {
-      this.shaperService.shapeHandler(sms);
+      this.shaperService.shapeHandlerCM(messageIDE);
+    }
+
+    if (
+      messageIDE.layerType === 'vectorial' &&
+      messageIDE.datasource === 'PS'
+    ) {
+      this.shaperService.shapeHandlerPS(messageIDE);
+    }
+
+    if (
+      messageIDE.layerType === 'vectorial' &&
+      messageIDE.datasource === 'CA'
+    ) {
+      this.shaperService.shapeHandlerCA(messageIDE);
     }
 
     let pathAndFile = sms.folder + sms.filename + '.' + sms.type;
-    this.logger.error('Errores en el mensajSSSe', 'errorMessagSSSe');
 
     // Traer todos los archivos de esa extension
     if (sms.type === 'shp') {

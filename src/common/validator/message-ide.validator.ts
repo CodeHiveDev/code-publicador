@@ -25,7 +25,7 @@ export class MessageIDE implements IMessageIDE {
 
   @IsOptional()
   @IsDefined()
-  timeDimension?: any;
+  timeDimension?: string;
 
   @IsOptional()
   @IsString()
