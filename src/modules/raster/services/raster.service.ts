@@ -39,21 +39,32 @@ export class RasterService {
     console.log("Arreglo de arreglos: ", arregloDeArreglos);
 
 
-    arregloDeArreglos.forEach(async (element) => {
+    for(let elem of arregloDeArreglos) {
+      try {
 
-      const fileZip = await this.helperService.createZipArchiveBatch(element);
+        const fileZip = await this.helperService.createZipArchiveBatch(elem);
 
-      await this.geoService.uploadRaster(fileZip, datastore);
+        await this.geoService.uploadRaster(fileZip, datastore);
 
-    });
+      } catch (error) {
+        console.log('arregloDeArreglos'+ error);
+      }
+    }
 
-    items.forEach(async (element) => {
 
-      const name = element.Key.split('/')[2];
-      console.log(name);
-      await this.geoService.updateRaster2(`file:///var/geoserver/datadir/data/${this.WORKSPACE}/${datastore}/e${name}`,datastore)
+    for(let element of items) {
+      try {
 
-    });
+        const name = element.Key.split('/')[2];
+        console.log(name);
+        await this.geoService.updateRaster2(`file:///var/geoserver/datadir/data/${this.WORKSPACE}/${datastore}/e${name}`,datastore)
+  
+
+      } catch (error) {
+        console.log('for updateRaster2'+ error);
+      }
+    }
+
 
 
 
@@ -64,3 +75,4 @@ export class RasterService {
 
   }
 }
+
