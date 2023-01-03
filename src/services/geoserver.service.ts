@@ -443,6 +443,22 @@ export class GeoserverService {
 
   async setConfigRaster(datastore: any) {
     try {
+
+      const createcoverage =
+      `<coverage>\
+      <nativeCoverageName>${datastore}</nativeCoverageName>\
+      <name>${datastore}</name>\
+      </coverage>`;
+
+        await firstValueFrom(
+        this.httpService.post(
+          `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${datastore}/coverages`,
+          createcoverage,
+          { headers: { 'Content-Type': `application/xml` } },
+        ),
+      );
+
+
       const coverage =
         '<coverage>\
       <enabled>true</enabled>\
@@ -450,24 +466,33 @@ export class GeoserverService {
       <dimensionInfo>\
       <enabled>true</enabled>\
       <presentation>CONTINUOUS_INTERVAL</presentation>\
+      <defaultValue>\
+      <strategy>MAXIMUM</strategy>\
+      </defaultValue>\
       <units>ISO8601</units><defaultValue/>\
       </dimensionInfo>\
       </entry></metadata>\
       </coverage>';
 
-      const { data, status } = await firstValueFrom(
+      const { data, status } =  await firstValueFrom(
         this.httpService.put(
           `http://${this.host}/geoserver/rest/workspaces/${this.WORKSPACE}/coveragestores/${datastore}/coverages/${datastore}`,
           coverage,
           { headers: { 'Content-Type': `application/xml` } },
         ),
       );
+
+
+
       return data;
+
+
     } catch (e) {
       console.log('Error setConfigRaster: ', e.message);
 
       return true;
     }
+
   }
 }
 
